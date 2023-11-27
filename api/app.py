@@ -1,6 +1,6 @@
 import os
 
-import psycopg as db
+import psycopg2 as db
 from dotenv import load_dotenv
 from flask import Flask, render_template
 
