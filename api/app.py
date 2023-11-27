@@ -11,16 +11,16 @@ app = Flask(__name__)
 def index():
     # TESTING IF VERCEL WORKS
     # load_dotenv()
-
+    print(os.environ.get("pguser"))
     conn = db.connect(**{"dbname": os.environ.get("PGDATABASE"),
                          'host': 'db.doc.ic.ac.uk',
                          'port': os.environ.get("PGPORT"),
                          'user': os.environ.get("PGUSER"),
                          'password': os.environ.get("PASSWORD"),
                          'client_encoding': 'utf-8'})
-
+    
     curs = conn.cursor()
-    print(os.environ.get("pguser"))
+
     curs.execute("""SELECT * FROM branch""")
     rec = curs.fetchone()
     # conn.commit()
