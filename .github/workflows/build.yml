@@ -1,0 +1,54 @@
+name: Build
+on: [push]
+jobs:
+  python-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run flake8
+        run: flake8 api/
+
+      - name: Run autoflake to remove unused imports
+        run: autoflake -i --remove-all-unused-imports api/*.py
+
+      - name: Run isort to check ordering of imports
+        run: isort --check -diff api/
+
+  run-unit-tests:
+    needs: python-formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run pytest
+        run: pytest api/*.py
+
+  deploy-to-vercel:
+    needs: run-unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_PROJ_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
