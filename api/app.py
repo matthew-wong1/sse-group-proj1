@@ -18,7 +18,6 @@ def index():
                          'user': os.environ.get("PGUSER"),
                          'password': os.environ.get("PASSWORD"),
                          'client_encoding': 'utf-8'})
-    
     curs = conn.cursor()
 
     curs.execute("""SELECT * FROM branch""")
