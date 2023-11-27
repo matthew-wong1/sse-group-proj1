@@ -11,7 +11,6 @@ app = Flask(__name__)
 def index():
     # TESTING IF VERCEL WORKS
     # load_dotenv()
-    print(os.environ.get("pguser"))
     conn = db.connect(**{"dbname": os.environ.get("PGDATABASE"),
                          'host': 'db.doc.ic.ac.uk',
                          'port': os.environ.get("PGPORT"),
