@@ -1,7 +1,7 @@
 import os
 
 import psycopg2 as db
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from flask import Flask, render_template
 
 app = Flask(__name__)
@@ -10,18 +10,17 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     # TESTING IF VERCEL WORKS
-    load_dotenv()
+    # load_dotenv()
 
-    conn = db.connect(**{"dbname": os.environ.get("pgdatabase"),
+    conn = db.connect(**{"dbname": os.environ.get("PGDATABASE"),
                          'host': 'db.doc.ic.ac.uk',
-                         'port': os.environ.get("pgport"),
-                         'user': os.environ.get("pguser"),
-                         'password': os.environ.get("password"),
+                         'port': os.environ.get("PGPORT"),
+                         'user': os.environ.get("PGUSER"),
+                         'password': os.environ.get("PASSWORD"),
                          'client_encoding': 'utf-8'})
 
-    print(os.environ.get("pgport"))
     curs = conn.cursor()
-
+    print(os.environ.get("pguser"))
     curs.execute("""SELECT * FROM branch""")
     rec = curs.fetchone()
     # conn.commit()
