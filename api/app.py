@@ -12,13 +12,14 @@ def index():
     # TESTING IF VERCEL WORKS
     load_dotenv()
 
-    conn = db.connect(**{"dbname": os.environ.get("PGDATABASE"),
+    conn = db.connect(**{"dbname": os.environ.get("pgdatabase"),
                          'host': 'db.doc.ic.ac.uk',
-                         'port': os.environ.get("PGPORT"),
-                         'user': os.environ.get("PGUSER"),
-                         'password': os.environ.get("PASSWORD"),
+                         'port': os.environ.get("pgport"),
+                         'user': os.environ.get("pguser"),
+                         'password': os.environ.get("password"),
                          'client_encoding': 'utf-8'})
 
+    print(os.environ.get("pgport"))
     curs = conn.cursor()
 
     curs.execute("""SELECT * FROM branch""")
