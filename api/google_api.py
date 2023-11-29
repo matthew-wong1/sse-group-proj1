@@ -1,7 +1,7 @@
-import urllib.request
-import urllib.parse
-import ssl
 import json
+import ssl
+import urllib.parse
+import urllib.request
 
 
 def get_coordinates(destination, api_key):
