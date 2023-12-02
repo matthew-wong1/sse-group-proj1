@@ -837,6 +837,16 @@ video {
     color: rgb(12 47 151 / var(--tw-text-opacity));
   }
 
+.hover\:bg-logo-contrast-darker:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(9 35 113 / var(--tw-bg-opacity));
+}
+
+.hover\:text-logo-contrast-darker:hover {
+    --tw-text-opacity: 1;
+    color: rgb(9 35 113 / var(--tw-text-opacity));
+}
+
 .bg-cover {
   background-size: cover;
 }
