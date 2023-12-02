@@ -139,3 +139,13 @@ def restaurants():
 
     return render_template("restaurants.html",
                            restaurants=restaurants, center=center)
+
+
+@app.route("/signup")
+def signup():
+    return render_template("signup.html")
+
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
