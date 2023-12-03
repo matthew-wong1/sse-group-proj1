@@ -59,6 +59,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run coverage to check unit test coverage
+        env:
+            PASSWORD: ${{ secrets.PASSWORD }}
+            PGDATABASE: ${{ secrets.PGDATABASE }}
+            PHGHOST: ${{ secrets.PGHOST }}
+            PGPORT: ${{ secrets.PGPORT }}
+            PGUSER: ${{ secrets.PGUSER }}
         run: |
           coverage run -m pytest tests/
           coverage report
