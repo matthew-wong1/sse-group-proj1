@@ -37,6 +37,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run pytest
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+          PHGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
         run: pytest tests/*.py
 
   check-unit-test-coverage:
@@ -69,9 +75,4 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_PROJ_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          password: ${{ secrets.PASSWORD }}
-          pgdatabase: ${{ secrets.PGDATABASE }}
-          pghost: ${{ secrets.PGHOST }}
-          pgport: ${{ secrets.PGPORT }}
-          pguser: ${{ secrets.PGUSER }}
           vercel-args: '--prod'

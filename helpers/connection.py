@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 # ADD EXCEPTION HANDLING
 def connect_to_db():
     load_dotenv()
-    print(os.environ.get("PGDATABASE"))
+
     conn = db.connect(**{"dbname": os.environ.get("PGDATABASE"),
                          'host': 'db.doc.ic.ac.uk',
                          'port': os.environ.get("PGPORT"),
