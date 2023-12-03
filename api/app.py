@@ -5,7 +5,8 @@ import urllib.request
 
 from flask import Flask, redirect, render_template, request
 
-from helpers.auth import add_user, check_password, check_repeat, check_username
+from helpers.auth import (add_user, check_password, check_username,
+                          match_password, user_exists)
 
 app = Flask(__name__)
 
@@ -150,8 +151,7 @@ def signup():
 
         # Check if fields empty
         check_username(username, errors)
-        check_password(password, errors)
-        check_repeat(password, repeat_password, errors)
+        check_password(password, repeat_password, errors)
 
         if not errors:
             add_user(username, password)
@@ -167,17 +167,14 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        # Check if fields empty
-        if not username:
-            errors["username"] = "Please enter a username"
+        if (user_exists(username) or not match_password(username, password)):
+            errors['login'] = 'Incorrect username or password'
+            return render_template("login.html",
+                                   username=username,
+                                   errors=errors)
 
-        if not password:
-            errors["password"] = "Please enter a password"
-
-        # Check database if user exists and if password hash matches
-            # if not, display invalid username and/or password
         return redirect("/")
-        return render_template("login.html", username=username, errors=errors)
+
     else:
         return render_template("login.html")
 
