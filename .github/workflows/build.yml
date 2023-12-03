@@ -60,7 +60,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run coverage to check unit test coverage
         run: |
-          coverage run -m pytest api/
+          coverage run -m pytest tests/
           coverage report
 
   deploy-to-vercel:
