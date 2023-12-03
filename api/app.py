@@ -3,11 +3,9 @@ import ssl
 import urllib.parse
 import urllib.request
 
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request
 
-# import os
-# import psycopg2 as db
-# from dotenv import load_dotenv
+from helpers.auth import add_user, check_password, check_repeat, check_username
 
 app = Flask(__name__)
 
@@ -141,11 +139,49 @@ def restaurants():
                            restaurants=restaurants, center=center)
 
 
-@app.route("/signup")
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
+
+    if request.method == "POST":
+        errors = {}
+        username = request.form.get("username")
+        password = request.form.get("password")
+        repeat_password = request.form.get("repeat_password")
+
+        # Check if fields empty
+        check_username(username, errors)
+        check_password(password, errors)
+        check_repeat(password, repeat_password, errors)
+
+        if not errors:
+            add_user(username, password)
+            return redirect("login")
+        return render_template("signup.html", username=username, errors=errors)
     return render_template("signup.html")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    errors = {}
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        # Check if fields empty
+        if not username:
+            errors["username"] = "Please enter a username"
+
+        if not password:
+            errors["password"] = "Please enter a password"
+
+        # Check database if user exists and if password hash matches
+            # if not, display invalid username and/or password
+        return redirect("/")
+        return render_template("login.html", username=username, errors=errors)
+    else:
+        return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    return redirect("/")
