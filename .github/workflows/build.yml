@@ -43,6 +43,7 @@ jobs:
           PHGHOST: ${{ secrets.PGHOST }}
           PGPORT: ${{ secrets.PGPORT }}
           PGUSER: ${{ secrets.PGUSER }}
+          SECRETKEY: ${{ secrets.SECRETKEY }}
         run: pytest tests/*.py
 
   check-unit-test-coverage:
@@ -65,6 +66,7 @@ jobs:
             PHGHOST: ${{ secrets.PGHOST }}
             PGPORT: ${{ secrets.PGPORT }}
             PGUSER: ${{ secrets.PGUSER }}
+            SECRETKEY: ${{ secrets.SECRETKEY }}
         run: |
           coverage run -m pytest tests/
           coverage report
