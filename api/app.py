@@ -1,16 +1,38 @@
 import os
 
-from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, request
-
 import helpers.connection as db
 import helpers.google_api as g_api
+from dotenv import load_dotenv
+from flask import Flask, redirect, render_template, request, session
+from flask_login import (LoginManager, UserMixin, login_required, login_user,
+                         logout_user)
 from helpers.auth import (add_user, check_password, check_username,
-                          match_password, user_exists)
+                          get_user_id, get_username, match_password,
+                          user_exists)
 
 app = Flask(__name__)
 
+load_dotenv()
+app.config['SECRET_KEY'] = os.environ.get("SECRETKEY")
 
+# Configure Flask login
+login_manager = LoginManager(app)
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+
+class User(UserMixin):
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User(id=user_id, username=get_username)
+
+
+# Configure routing
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -82,6 +104,9 @@ def login():
                                    username=username,
                                    errors=errors)
 
+        user = User(id=get_user_id(username), username=username)
+        login_user(user)
+        print(session)
         return redirect("/")
 
     else:
@@ -89,8 +114,16 @@ def login():
 
 
 @app.route("/logout")
+@login_required
 def logout():
+    logout_user()
     return redirect("/")
+
+
+@app.route('/test')
+@login_required
+def test():
+    return ("Hello")
 
 
 @app.route('/save-restaurant', methods=['POST'])

@@ -20,6 +20,32 @@ def user_exists(username):
     return username in rec
 
 
+def get_user_id(username):
+    conn, cursor = connect_to_db()
+
+    cursor.execute("""SELECT id
+        FROM users
+        WHERE username=%s""", [username])
+    rec = cursor.fetchone()
+
+    conn.close()
+
+    return rec[0]
+
+
+def get_username(user_id):
+    conn, cursor = connect_to_db()
+
+    cursor.execute("""SELECT username
+        FROM users
+        WHERE id=%s""", [user_id])
+    rec = cursor.fetchone()
+
+    conn.close()
+
+    return rec[0]
+
+
 # Check if password is valid (matches requirements and confirmation password)
 def check_password(password, another_password, errors):
     if not password:
