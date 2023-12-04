@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.bg-logo {
+    --tw-bg-opacity: 1;
+    background-color: rgb(216 238 210 / var(--tw-bg-opacity));
+  }
+  
+  .bg-main {
+    --tw-bg-opacity: 1;
+    background-color: rgb(238 241 239 / var(--tw-bg-opacity));
+  }
+  
+  .bg-logo-contrast {
+    --tw-bg-opacity: 1;
+    background-color: rgb(12 47 151 / var(--tw-bg-opacity));
+  }
+  
+  .text-logo-contrast {
+      --tw-text-opacity: 1;
+      color: rgb(12 47 151 / var(--tw-text-opacity));
+    }
+  
+  .hover\:bg-logo-contrast-darker:hover {
+    --tw-bg-opacity: 1;
+    background-color: rgb(9 35 113 / var(--tw-bg-opacity));
+  }
+  
+  .hover\:text-logo-contrast-darker:hover {
+      --tw-text-opacity: 1;
+      color: rgb(9 35 113 / var(--tw-text-opacity));
+  }
+
+  .p-nav {
+    padding: 5rem;
+  }
