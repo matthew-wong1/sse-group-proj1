@@ -1,121 +1,16 @@
-import json
-import ssl
-import urllib.parse
-import urllib.request
+import os
 
+import helpers.connection as db
+import helpers.google_api as g_api
 from flask import Flask, redirect, render_template, request
-
 from helpers.auth import (add_user, check_password, check_username,
                           match_password, user_exists)
 
 app = Flask(__name__)
 
 
-def get_coordinates(destination, api_key):
-    base_url = 'https://maps.googleapis.com/maps/api/geocode/json?'
-
-    # Setup SSL context to ignore SSL certificate errors
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-
-    # Prepare parameters for the API request
-    params = {'address': destination, 'key': api_key}
-
-    # Construct and make the API request
-    url = base_url + urllib.parse.urlencode(params)
-    try:
-        with urllib.request.urlopen(url, context=ctx) as response:
-            json_data = json.loads(response.read().decode())
-    except Exception as e:
-        print(f'get_coordinates: Error retrieving data = {e}')
-        return None, None
-
-    # Check if the API response is valid
-    if json_data.get('status') != 'OK':
-        print('get_coordinates(): Error bad response')
-        return None, None
-
-    coordinates = json_data['results'][0]['geometry']['location']
-    return coordinates['lat'], coordinates['lng']
-
-
-def get_restaurants(latitude, longitude, dist, price, open_now, api_key):
-    base_url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-
-    # Setup SSL context to ignore SSL certificate errors
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-
-    # Construct parameters for the Places API request
-    params = {
-        'location': f'{latitude},{longitude}',
-        'radius': dist,
-        'keyword': 'restaurant',
-        'key': api_key
-    }
-    if price:
-        params['maxprice'] = price
-    if open_now:
-        params['opennow'] = 'true'
-
-    # Construct the Places API request URL
-    url = base_url + urllib.parse.urlencode(params)
-
-    # Make the Places API request
-    try:
-        with urllib.request.urlopen(url, context=ctx) as response:
-            json_data = json.loads(response.read().decode())
-    except Exception as e:
-        print(f'get_restaurants(): Error retrieving data = {e}')
-        return None, None
-
-    # Check if the Places API response is valid
-    if json_data.get('status') != 'OK':
-        print('get_restaurants(): Error bad response')
-        return None
-
-    # Process and print restaurants (greater that 4* and more than 30 reviews)
-    restaurants = {}
-    for result in json_data['results']:
-        rating = result.get('rating', 0)
-        user_ratings_total = result.get('user_ratings_total', 0)
-
-        if rating > 4 and user_ratings_total > 20:
-            name = result['name']
-            lat = result['geometry']['location']['lat']
-            lng = result['geometry']['location']['lng']
-            restaurants[name] = {
-                "latitude": lat,
-                "longitude": lng,
-                "rating": rating,
-                "num_user_ratings": user_ratings_total
-            }
-
-    return restaurants
-
-
 @app.route("/")
 def index():
-    # # TESTING IF VERCEL WORKS
-    # # load_dotenv()
-    # conn = db.connect(**{"dbname": os.environ.get("PGDATABASE"),
-    #                      'host': 'db.doc.ic.ac.uk',
-    #                      'port': os.environ.get("PGPORT"),
-    #                      'user': os.environ.get("PGUSER"),
-    #                      'password': os.environ.get("PASSWORD"),
-    #                      'client_encoding': 'utf-8'})
-    # curs = conn.cursor()
-    #
-    # curs.execute("""SELECT * FROM branch""")
-    # rec = curs.fetchone()
-    # # conn.commit()
-    #
-    # conn.close()
-    #
-    # return render_template("index.html", rec=rec)
-
     return render_template("index.html")
 
 
@@ -129,12 +24,16 @@ def restaurants():
         "guests": request.form.get("guests")
     }
 
-    api_key = 'AIzaSyD4WDNlgnhFpI3O2idkfNBZk2l1dpVLVYQ'
-    lat, lng = get_coordinates(request_data["destination"], api_key)
+    api_key = os.environ.get("GLOUD_KEY")
+    lat, lng = g_api.get_coordinates(request_data["destination"], api_key)
 
     if lat is not None and lng is not None:
         center = (lat, lng)
-        restaurants = get_restaurants(lat, lng, 1000, None, True, api_key)
+        restaurants = g_api.get_restaurants(lat, lng, 1000,
+                                            None, True, api_key)
+
+    restaurants = db.is_restaurant_saved(restaurants)
+    print(restaurants)
 
     return render_template("restaurants.html",
                            restaurants=restaurants, center=center)
@@ -182,3 +81,47 @@ def login():
 @app.route("/logout")
 def logout():
     return redirect("/")
+
+
+@app.route('/save-restaurant', methods=['POST'])
+def save_restaurant():
+    try:
+        data = request.json
+        conn, cursor = db.connect_to_db()
+
+        sql = """INSERT INTO restaurants (name, latitude, longitude,
+                                          rating, num_ratings)
+                 VALUES (%s, %s, %s, %s, %s)"""
+        cursor.execute(sql, (data['name'], data['latitude'], data['longitude'],
+                             data['rating'], data['num_user_ratings']))
+
+        conn.commit()
+
+    except Exception as e:
+        print(e)
+        return {'status': 'error', 'message': str(e)}
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {'status': 'success'}
+
+
+@app.route('/delete-restaurant', methods=['POST'])
+def delete_restaurant():
+    data = request.json
+    name = data['name']
+
+    try:
+        conn, cursor = db.connect_to_db()
+        cursor.execute("DELETE FROM restaurants WHERE name = %s", (name,))
+        conn.commit()
+    except Exception as e:
+        print(e)
+        return {'status': 'error', 'message': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+    return {'status': 'success'}
