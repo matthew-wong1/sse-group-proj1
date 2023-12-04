@@ -1,11 +1,12 @@
 import os
 
-import helpers.connection as db
-import helpers.google_api as g_api
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, session
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
+
+import helpers.connection as db
+import helpers.google_api as g_api
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
                           user_exists)
