@@ -1,8 +1,9 @@
 import os
 
+from flask import Flask, redirect, render_template, request
+
 import helpers.connection as db
 import helpers.google_api as g_api
-from flask import Flask, redirect, render_template, request
 from helpers.auth import (add_user, check_password, check_username,
                           match_password, user_exists)
 
