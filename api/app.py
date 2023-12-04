@@ -1,5 +1,6 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request
 
 import helpers.connection as db
@@ -25,7 +26,8 @@ def restaurants():
         "guests": request.form.get("guests")
     }
 
-    api_key = os.environ.get("GLOUD_KEY")
+    load_dotenv()
+    api_key = os.environ.get("GCLOUD_KEY")
     lat, lng = g_api.get_coordinates(request_data["destination"], api_key)
 
     if lat is not None and lng is not None:
@@ -33,7 +35,7 @@ def restaurants():
         restaurants = g_api.get_restaurants(lat, lng, 1000,
                                             None, True, api_key)
 
-    restaurants = db.is_restaurant_saved(restaurants)
+    # restaurants = db.is_restaurant_saved(restaurants)
     print(restaurants)
 
     return render_template("restaurants.html",
