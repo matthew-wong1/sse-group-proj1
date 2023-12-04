@@ -87,15 +87,3 @@ def get_restaurants(latitude, longitude, dist, price, open_now, api_key):
             }
 
     return restaurants
-
-
-if __name__ == "__main__":
-
-    # Usage example
-    api_key = 'AIzaSyBoowzUN8IcLDTD2p8IO1JkT-4t8k2_zHs'
-    lat, lng = get_coordinates("South Kensington", api_key)
-
-    if lat is not None and lng is not None:
-        print(f"Latitude: {lat}, Longitude: {lng}")
-        restaurants = get_restaurants(lat, lng, 1000, None, True, api_key)
-        print(restaurants)

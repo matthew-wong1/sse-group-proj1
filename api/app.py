@@ -16,14 +16,21 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/things-to-do", methods=["POST"])
+def things_to_do():
+    request_data = {
+        "destination": request.form.get("destination"),
+        "date": request.form.get("date"),
+    }
+    return request_data
+
+
 @app.route("/restaurants", methods=["POST"])
 def restaurants():
     # Parse data from form
     request_data = {
         "destination": request.form.get("destination"),
-        "check_in_date": request.form.get("check_in_date"),
-        "check_out_date": request.form.get("check_out_date"),
-        "guests": request.form.get("guests")
+        "date": request.form.get("date"),
     }
 
     load_dotenv()
