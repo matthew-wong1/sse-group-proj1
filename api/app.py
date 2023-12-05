@@ -36,6 +36,7 @@ def load_user(user_id):
 # Configure routing
 @app.route("/")
 def index():
+    print(session)
     return render_template("index.html")
 
 
@@ -94,6 +95,9 @@ def signup():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if '_user_id' in session:
+        return redirect("/")
+
     errors = {}
     if request.method == "POST":
         username = request.form.get("username")
@@ -107,7 +111,7 @@ def login():
 
         user = User(id=get_user_id(username), username=username)
         login_user(user)
-        print(session)
+        session['username'] = username
         return redirect("/")
 
     else:
@@ -118,6 +122,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    session.clear()
     return redirect("/")
 
 
