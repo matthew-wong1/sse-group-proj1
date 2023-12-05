@@ -2,13 +2,15 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, jsonify, session, redirect, url_for
+from flask_login import (LoginManager, UserMixin, login_required, login_user,
+                         logout_user)
 
 import helpers.connection as db
 import helpers.google_api as g_api
 import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
-                          match_password, user_exists)
-
+                          get_user_id, get_username, match_password,
+                          user_exists)
 
 import json
 from requests.exceptions import HTTPError, RequestException
@@ -16,7 +18,27 @@ from requests.exceptions import HTTPError, RequestException
 
 app = Flask(__name__)
 
+load_dotenv()
+app.config['SECRET_KEY'] = os.environ.get("SECRETKEY")
 
+# Configure Flask login
+login_manager = LoginManager(app)
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+
+class User(UserMixin):
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User(id=user_id, username=get_username)
+
+
+# Configure routing
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -63,6 +85,9 @@ def login():
                                    username=username,
                                    errors=errors)
 
+        user = User(id=get_user_id(username), username=username)
+        login_user(user)
+        print(session)
         return redirect("/")
 
     else:
@@ -70,15 +95,23 @@ def login():
 
 
 @app.route("/logout")
+@login_required
 def logout():
+    logout_user()
     return redirect("/")
+
+
+@app.route('/test')
+@login_required
+def test():
+    return ("Hello")
 
 
 @app.route("/restaurants", methods=['GET', 'POST'])
 def show_restaurants():
     try:         
         api_key = os.getenv('GCLOUD_KEY', 
-                            'AIzaSyDGKEq5PZaed217QcVR1MH2sJ1K-f1R3s8')
+                            '')
         if not api_key:
             app.logger.error("API key is empty")
             return jsonify({'error': 'API key is empty'}), 400
