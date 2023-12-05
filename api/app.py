@@ -121,12 +121,6 @@ def logout():
     return redirect("/")
 
 
-@app.route('/test')
-@login_required
-def test():
-    return ("Hello")
-
-
 @app.route('/save-restaurant', methods=['POST'])
 def save_restaurant():
     try:
@@ -169,3 +163,8 @@ def delete_restaurant():
         conn.close()
 
     return {'status': 'success'}
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("404.html"), 404
