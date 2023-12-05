@@ -1,4 +1,5 @@
 import pytest
+
 from helpers.auth import (check_password, check_username, get_user_id,
                           get_username, match_password, user_exists)
 
