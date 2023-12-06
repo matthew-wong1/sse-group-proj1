@@ -295,6 +295,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(restaurantData),
+                    credentials: 'include' // test if this fixes log in error
                 })
                 .then(response => {
                     if (!response.ok) {

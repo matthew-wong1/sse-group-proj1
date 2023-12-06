@@ -222,10 +222,12 @@ def show_restaurants():
 
 @app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
+    print("Session in /restaurants:", session)
+    if '_user_id' not in session:
+        return redirect(url_for("login"))
+    conn = None
+    cursor = None
     try:
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-
         # data will be from the JS passing the dictionary of info
         data = request.json
 
@@ -288,7 +290,7 @@ def save_restaurant():
             )
 
             # TEMP userid BEING USED!
-            userid = session["user_id"]
+            userid = session["_user_id"]
             # userid = "tp4646"
 
             # Insert into placesadded table
@@ -314,21 +316,25 @@ def save_restaurant():
         return {"status": "error", "message": str(e)}
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
     return {"status": "success"}
 
 
 @app.route("/delete-restaurant", methods=["POST"])
 def delete_restaurant():
-    if "user_id" not in session:
+    conn = None
+    cursor = None
+    if '_user_id' not in session:
         # User is not logged in, redirect to login page
         return redirect(url_for("login"))
 
     data = request.json
     # Retrieve user_id from session
-    userid = session["user_id"]
+    userid = session["_user_id"]
     # userid = "tp4646"
 
     try:
@@ -366,8 +372,10 @@ def delete_restaurant():
         return {"status": "error", "message": str(e)}
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
     return {
         "status": "success",
