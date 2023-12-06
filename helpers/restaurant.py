@@ -3,6 +3,8 @@ import requests
 from flask import request
 from requests.utils import quote
 
+from helpers.connection import connect_to_db
+
 
 def generate_map(restaurant_data, to_do_lat, to_do_long, radius):
     try:
@@ -193,7 +195,8 @@ def sort_and_slice_restaurants(all_restaurants, top_n=15):
     return dict(list(sorted_restaurants.items())[:top_n])
 
 
-def fetch_additional_details(api_key, top_restaurants_dict, max_requests=15):
+def fetch_additional_details(api_key, top_restaurants_dict,
+                             date, location, max_requests=15):
     counter = 0
     for name, details in top_restaurants_dict.items():
         if counter >= max_requests:
@@ -218,7 +221,7 @@ def fetch_additional_details(api_key, top_restaurants_dict, max_requests=15):
                 details["website"] = result.get(
                     "website", details["search_link"]
                 )
-                details["editorial_summary_overview"] = result.get(
+                details["editorial_summary"] = result.get(
                     "editorial_summary", {}
                 ).get("overview", "Editorial summary not found")
 
@@ -230,6 +233,38 @@ def fetch_additional_details(api_key, top_restaurants_dict, max_requests=15):
                     if photo_reference
                     else "Image not found"
                 )
+                # location, place_id and date are used for the table!
+                details["date"] = date
+                details["location"] = location
+                # default is_saved false
+                details["is_saved"] = False
 
         counter += 1
     return top_restaurants_dict
+
+
+def is_restaurant_saved(restaurants):
+    try:
+        conn, cursor = connect_to_db()
+        cursor.execute("SELECT placeid FROM places")
+        # get a tuple of all the placeids from places table
+        saved_restaurants_records = cursor.fetchall()
+        conn.commit()
+    except Exception as e:
+        print(e)
+        return restaurants
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Convert the list of tuples to a set for faster lookup
+    # tuple of placeids.
+    saved_restaurants = set(record[0] for record in saved_restaurants_records)
+
+    # Update the 'is_saved' status for each
+    # restaurant if its place_id is in the saved_restaurants set
+    for restaurant_name, details in restaurants.items():
+        if 'place_id' in details and details['place_id'] in saved_restaurants:
+            details['is_saved'] = True
+
+    return restaurants

@@ -167,7 +167,7 @@
                             </div>
                             <!-- Star Rating -->
                             <div class="star-rating" style="--rating: {{ details['rating']|default(0) }};"></div>
-                            <p class="text-gray-500 mt-2">{{ details['editorial_summary_overview']|default('Description not available') }}</p>
+                            <p class="text-gray-500 mt-2">{{ details['editorial_summary']|default('Description not available') }}</p>
                         </div>
                         <!-- Ratings and Reviews -->
                         <div class="flex justify-between items-end">
@@ -179,7 +179,10 @@
                         </div>
                     </div>
                     <!-- Heart Icon -->
-                    <i id="heart-{{ details['place_id'] }}" class="far fa-heart fa-beat absolute top-4 right-4 text-red-500 text-2xl cursor-pointer" onclick="toggleRestaurant('{{ details['place_id'] }}')"></i>
+                    <i id="heart-{{ details['place_id'] }}" 
+                    class="{{ 'fas' if details.get('is_saved', False) else 'far' }} fa-heart fa-beat absolute top-4 right-4 text-red-500 text-2xl cursor-pointer" 
+                    onclick="toggleRestaurant('{{ details['place_id'] }}')">
+                    </i>
                 </div>
             {% else %}
                 <p>No restaurant data available.</p>
@@ -259,7 +262,10 @@
                             rating_count: details['rating_count'],
                             search_link: details['website'],
                             photo_reference: details['photo_url'],
-                            editorial_summary: details['formatted_phone_number'],
+                            editorial_summary: details['editorial_summary'],
+                            phone_number: details['formatted_phone_number'],
+                            date: details['date'], 
+                            location: details['location']
                         };
                         return restaurantData;
                     }
@@ -312,7 +318,11 @@
                 })
                 .catch((error) => {
                     console.error('Error:', error);
-                    alert('You need to be logged in to save to favourites');
+                    // Confirm with the user if they want to log in
+                    if (confirm('You need to be logged in to save to favourites. Would you like to log in now?')) {
+                        // If they confirm, redirect them to the login page
+                        window.location.href = '/login'; // Use the correct route for your login page
+                    }                           
                 });
             }
 

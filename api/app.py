@@ -1,18 +1,17 @@
 import json
 import os
 
+import helpers.connection as db
+import helpers.restaurant as hres
 from dotenv import load_dotenv
 from flask import (Flask, jsonify, redirect, render_template, request, session,
                    url_for)
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
-from requests.exceptions import HTTPError, RequestException
-
-import helpers.connection as db
-import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
                           user_exists)
+from requests.exceptions import HTTPError, RequestException
 
 app = Flask(__name__)
 
@@ -113,27 +112,39 @@ def show_restaurants():
         if not api_key:
             app.logger.error("API key is empty")
             return jsonify({"error": "API key is empty"}), 400
+
         # Default data
         default_data = {
             "place_id": "ChIJz-VvsdMEdkgR1lQfyxijRMw",
             "name": "Default: China Town",
+            "location": "London",
+            "date": "2023-01-01",
         }
+        # example dictionary from the post.
+        # {"location":"London", "placeid": "placeid01",
+        #  "name":"London Eye", "date": "2023-01-01"}
 
         # Handling for POST request
+        # Note default data wont be required in real
         if request.method == "POST":
             routes_data = request.get_json() or {}
             place_id = routes_data.get("place_id", default_data["place_id"])
             address = routes_data.get("name", default_data["name"])
+            # location of the search e.g. London
+            location = routes_data.get("location", default_data["location"])
+            date = routes_data.get("date", default_data["date"])
         else:
             # For a GET request, use query parameters
+            # Get request shouldnt happen?
             place_id = request.args.get("place_id", default_data["place_id"])
             address = request.args.get("name", default_data["name"])
+            location = request.args.get("location", default_data["location"])
+            date = request.args.get("date", default_data["date"])
 
         keyword_string, price, dist, open_q = hres.parse_request_parameters()
 
         # details return to the Jinja
         search_details = {
-            "place_id": place_id,
             "address": address,
             "keyword": keyword_string,
             "price": price,
@@ -154,12 +165,18 @@ def show_restaurants():
 
         # Process and sort restaurants
         all_restaurants = hres.process_restaurant_data(nearby_data)
-        top_restaurants_dict = hres.sort_and_slice_restaurants(all_restaurants)
+        top_restaurants_dict = hres.sort_and_slice_restaurants(
+            all_restaurants
+        )
 
         # Fetch additional details
+        # date and location of original search added to all for database
         top_restaurants_dict = hres.fetch_additional_details(
-            api_key, top_restaurants_dict
+            api_key, top_restaurants_dict, date, location
         )
+
+        # this will update the bool value for if heart should be red or not.
+        top_restaurants_dict = hres.is_restaurant_saved(top_restaurants_dict)
 
     except HTTPError as e:
         # This will catch HTTP errors, which occur when HTTP request
@@ -204,32 +221,35 @@ def show_restaurants():
 
 @app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
-    return {"status": "success"}
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     try:
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        # data will be from the JS passing the dictionary of info
         data = request.json
-        # Retrieve user_id from session
-        user_info = session["user_id"]
-        # Splitting the string
-        username, location_query, date = user_info.split("-")
 
         conn, cursor = db.connect_to_db()
 
-        # Step 1: Check if the row exists
-        check_query = "SELECT COUNT(*) FROM table1 WHERE place_id = %s"
+        # Step 1: Check if the row exists for place_id
+        # Check if the row exists using EXISTS
+        check_query = """
+            SELECT EXISTS(
+                SELECT 1 FROM places
+                WHERE placeid = %s
+            )
+        """
         cursor.execute(check_query, (data["place_id"],))
-        count = cursor.fetchone()[0]
+        exists = cursor.fetchone()[0]
 
         # Step 2: Update or Insert based on the check
-        if count > 0:
+        if exists:
             # Update
             update_query = """
-                UPDATE table1
+                UPDATE places
                 SET name = %s, ratings = %s, rating_count = %s,
-                search_link = %s, photo_reference = %s, editorial_summary = %s
-                WHERE place_id = %s
+                search_link = %s, photo_reference = %s,
+                editorial_summary = %s, type = %s
+                WHERE placeid = %s
             """
             cursor.execute(
                 update_query,
@@ -240,16 +260,17 @@ def save_restaurant():
                     data["search_link"],
                     data["photo_reference"],
                     data["editorial_summary"],
+                    "restaurant",
                     data["place_id"],
                 ),
             )
         else:
             # Insert
             insert_query = """
-                INSERT INTO table1 (place_id, name,
-                ratings, rating_count, search_link,
-                photo_reference, editorial_summary)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO places (placeid, name, ratings,
+                rating_count, search_link, photo_reference,
+                editorial_summary, type)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(
                 insert_query,
@@ -261,55 +282,31 @@ def save_restaurant():
                     data["search_link"],
                     data["photo_reference"],
                     data["editorial_summary"],
+                    "restaurant",
                 ),
             )
 
-        # Step 1: Check if the row exists
-        # Or could use: "SELECT EXISTS(SELECT 1 FROM table2
-        # WHERE Username = %s AND place_id = %s)"
-        # instead of count have exists and then if exists
-        # = update, else insert.
-        check_query = (
-            "SELECT COUNT(*) FROM table2 WHERE Username = %s AND place_id = %s"
-        )
-        cursor.execute(check_query, (data["Username"], data["place_id"]))
-        count = cursor.fetchone()[0]
+            # TEMP userid BEING USED!
+            userid = session["user_id"]
+            # userid = "tp4646"
 
-        # Step 2: Update or Insert based on the check
-        #   IS THE USERNAME AND DATE A UNIQUE COMBO/THE COMBO WE WANT?
-        if count > 0:
-            # Update
-            update_query = """
-                UPDATE table2
-                SET location_query = %s, date = %s
-                WHERE Username = %s AND place_id = %s
-            """
-            cursor.execute(
-                update_query,
-                (
-                    data["location_query"],
-                    data["date"],
-                    data["Username"],
-                    data["place_id"],
-                ),
-            )
-        else:
-            # Insert
+            # Insert into placesadded table
+            # this table will be unique so no need for a check
             insert_query = """
-                INSERT INTO table2 (Username, location_query, date, place_id)
+                INSERT INTO placesadded (userid, location, date, placeid)
                 VALUES (%s, %s, %s, %s)
             """
             cursor.execute(
                 insert_query,
                 (
-                    data["Username"],
-                    data["location_query"],
+                    userid,
+                    data["location"],
                     data["date"],
                     data["place_id"],
                 ),
             )
 
-        conn.commit()
+            conn.commit()
 
     except Exception as e:
         print(e)
@@ -324,38 +321,40 @@ def save_restaurant():
 
 @app.route("/delete-restaurant", methods=["POST"])
 def delete_restaurant():
-    return {"status": "success"}
     if "user_id" not in session:
         # User is not logged in, redirect to login page
         return redirect(url_for("login"))
 
     data = request.json
     # Retrieve user_id from session
-    user_info = session["user_id"]
-    # Splitting the string
-    username, location_query, date = user_info.split("-")
+    userid = session["user_id"]
+    # userid = "tp4646"
 
     try:
         conn, cursor = db.connect_to_db()
 
         # Delete the entry from the second table
-        sql_delete_table2 = ("DELETE FROM table2 WHERE Username"
-                             " = %s AND location_query = %s "
-                             "AND date = %s AND place_id = %s")
+        sql_delete_table2 = (
+            "DELETE FROM placesadded WHERE userid"
+            " = %s AND location = %s "
+            "AND date = %s AND placeid = %s"
+        )
         cursor.execute(
             sql_delete_table2,
-            (username, location_query, date, data["place_id"]),
+            (userid, data["location"], data["date"], data["place_id"]),
         )
 
-        # Check if there are no more references to the
-        # place_id in the second table before deleting from the first table
-        sql_check = "SELECT COUNT(*) FROM table2 WHERE place_id = %s"
+        # Check if no users have place_id in placesadded table
+        sql_check = (
+            "SELECT EXISTS (SELECT 1 FROM placesadded WHERE placeid = %s)"
+        )
         cursor.execute(sql_check, (data["place_id"],))
-        # no more rows in table2 with place_id reference.
-        if cursor.fetchone()[0] == 0:
-            # Delete the entry from the first table
-            # if no more references are found
-            sql_delete_table1 = "DELETE FROM table1 WHERE place_id = %s"
+        # Check if any row exists in table2 with the given place_id
+        exists = cursor.fetchone()[0]
+
+        # If place_id is not in the placesadded table i.e. user table
+        if not exists:
+            sql_delete_table1 = "DELETE FROM places WHERE placeid = %s"
             cursor.execute(sql_delete_table1, (data["place_id"],))
 
         conn.commit()
@@ -369,4 +368,7 @@ def delete_restaurant():
         cursor.close()
         conn.close()
 
-    return {"status": "success", "message": "Operation completed successfully"}
+    return {
+        "status": "success",
+        "message": "Operation completed successfully",
+    }
