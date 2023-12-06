@@ -130,7 +130,7 @@ def show_restaurants():
         if request.method == "POST":
             routes_data = request.get_json() or {}
             place_id = routes_data.get("place_id", default_data["place_id"])
-            address = routes_data.get("name", default_data["name"])
+            name = routes_data.get("name", default_data["name"])
             # location of the search e.g. London
             location = routes_data.get("location", default_data["location"])
             date = routes_data.get("date", default_data["date"])
@@ -138,7 +138,7 @@ def show_restaurants():
             # For a GET request, use query parameters
             # Get request shouldnt happen?
             place_id = request.args.get("place_id", default_data["place_id"])
-            address = request.args.get("name", default_data["name"])
+            name = request.args.get("name", default_data["name"])
             location = request.args.get("location", default_data["location"])
             date = request.args.get("date", default_data["date"])
 
@@ -146,7 +146,7 @@ def show_restaurants():
 
         # details return to the Jinja
         search_details = {
-            "address": address,
+            "name": name,
             "keyword": keyword_string,
             "price": price,
             "dist": dist,

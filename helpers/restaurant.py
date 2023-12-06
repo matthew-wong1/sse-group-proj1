@@ -95,17 +95,17 @@ def fetch_place_details(api_key, place_id):
             result = data["results"][0]
             lat = result["geometry"]["location"]["lat"]
             lng = result["geometry"]["location"]["lng"]
-            # will give the street address not the name of the thing
-            # place_name = result['formatted_address']
+            # will give the street name not the name of the thing
+            # place_name = result['formatted_name']
             return lat, lng
     return None, None
 
 
 def parse_request_parameters():
-    # place_id and address not required as passed in from the json
+    # place_id and name not required as passed in from the json
     # place_id = request.args.get('place_id',
     # 'ChIJz-VvsdMEdkgR1lQfyxijRMw')  # Default to Chinatown London
-    # address = request.args.get('address', 'Default: China Town')
+    # name = request.args.get('name', 'Default: China Town')
     keyword_string = request.args.get(
         "keyword", "restaurant")
     price = request.args.get("price", "2")

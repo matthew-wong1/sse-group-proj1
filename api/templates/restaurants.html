@@ -109,7 +109,7 @@
         </div>    
         <!-- Restaurants Container -->
         <div id="restaurants-container" class="flex-grow space-y-4 p-4 md:w-4/5 mx-auto">
-            <h1 class="title-style my-5">{{ search_details['keyword']|capitalize }}'s near to {{ search_details['address'] }}</h1>
+            <h1 class="title-style my-5">{{ search_details['keyword']|capitalize }}'s near to {{ search_details['name'] }}</h1>
             <!-- Filter Container -->
             <div class="flex justify-center">         
                 <div class="inline-flex justify-center items-center bg-white p-3 rounded-lg shadow mx-auto min-w-fit">
@@ -337,7 +337,7 @@
 
                 // Retrieve current values from URL
                 var currentParams = new URLSearchParams(window.location.search);
-                var currentAddress = currentParams.get('address') || 'soho london'; 
+                var currentName = currentParams.get('name') || 'soho london'; 
                 var currentPrice = currentParams.get('price') || '2'; // Default price level
                 var currentKeyword = currentParams.get('keyword') || 'restaurant'; // Default keyword
                 var currentPlace_id = currentParams.get('place_id') || 'ChIJz-VvsdMEdkgR1lQfyxijRMw';
@@ -353,7 +353,7 @@
                 currentParams.set('dist', distanceInMeters);
                 currentParams.set('price', selectedPriceLevel);
                 currentParams.set('keyword', selectedType);
-                currentParams.set('address', currentAddress); // Include the address in the query string for title
+                currentParams.set('name', currentName); // Include the name in the query string for title
                 currentParams.set('place_id', currentPlace_id); 
 
                 // Refreshing the page with updated parameters
