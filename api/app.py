@@ -1,17 +1,18 @@
 import json
 import os
 
-import helpers.connection as db
-import helpers.restaurant as hres
 from dotenv import load_dotenv
 from flask import (Flask, jsonify, redirect, render_template, request, session,
                    url_for)
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
+from requests.exceptions import HTTPError, RequestException
+
+import helpers.connection as db
+import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
                           user_exists)
-from requests.exceptions import HTTPError, RequestException
 
 app = Flask(__name__)
 
