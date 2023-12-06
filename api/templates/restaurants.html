@@ -282,7 +282,7 @@
                 }
 
                 const heartIcon = document.getElementById('heart-' + place_id);
-
+                heartIcon.classList.add('fa-spin'); // Add spinning class on click
                 // Determine the current state based on the icon class
                 const isSaved = heartIcon.classList.contains('fas');
                         
@@ -304,6 +304,7 @@
                     return response.json();
                 })
                 .then(data => {
+                    heartIcon.classList.remove('fa-spin');
                     if (data.status === 'success') {
                         // Toggle the icon
                         if (isSaved) {

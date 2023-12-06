@@ -222,7 +222,6 @@ def show_restaurants():
 
 @app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
-    print("Session in /restaurants:", session)
     if '_user_id' not in session:
         return redirect(url_for("login"))
     conn = None
