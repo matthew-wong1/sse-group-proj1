@@ -14,7 +14,7 @@ import helpers.places as plc
 import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
-                          user_exists, update_user)
+                          update_user, user_exists)
 
 app = Flask(__name__)
 
@@ -83,8 +83,8 @@ def settings():
         password_old = request.form.get("password_old")
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
-        
-        if(not match_password(session['username'], password_old)):
+
+        if (not match_password(session['username'], password_old)):
             errors['password_old'] = "Incorrect password"
 
         check_password(password, repeat_password, errors)
@@ -92,7 +92,7 @@ def settings():
         if success:
             update_user(session['_user_id'], password)
 
-        # if errors empty, render success text? 
+        # if errors empty, render success text?
         return render_template("settings.html", errors=errors)
     return render_template("settings.html")
 
@@ -107,7 +107,8 @@ def login():
         username = request.form.get("username").strip()
         password = request.form.get("password")
 
-        if(not user_exists(username) or (user_exists and not match_password(username, password))):
+        if (not user_exists(username) or
+           (user_exists and not match_password(username, password))):
             errors['login'] = 'Incorrect username or password'
             return render_template("login.html",
                                    username=username,

@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
-import helpers.connection as db
 import requests
-from fuzzywuzzy import process
 from flask import session
+from fuzzywuzzy import process
+
+import helpers.connection as db
 
 
 def get_places(search, date, api_key):
@@ -223,7 +224,7 @@ def is_restaurant_saved(restaurants):
         conn, cursor = db.connect_to_db()
         cursor.execute("""
                        SELECT placeid FROM placesadded WHERE userid = %s
-                       """,session["_user_id"])
+                       """, session["_user_id"])
         # get a tuple of all the placeids from places table
         saved_restaurants_records = cursor.fetchall()
         conn.commit()

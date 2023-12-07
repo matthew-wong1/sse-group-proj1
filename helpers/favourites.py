@@ -1,8 +1,9 @@
 import json
 
-import helpers.connection as db
 import requests
 from flask import session
+
+import helpers.connection as db
 
 
 def retrieve_favourites():
