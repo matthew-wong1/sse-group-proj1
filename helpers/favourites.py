@@ -5,43 +5,44 @@ from flask import session
 
 import helpers.connection as db
 
-
+# function to return the locations user had saved as favourites
+# from the database along with the place details
 def retrieve_favourites():
-    try:
-        conn, cursor = db.connect_to_db()
 
-        sql = """
-            SELECT
-                CONCAT(a.location, ' (',CAST(a.date AS VARCHAR),')') AS trip,
-                a.id AS index, a.location, a.date, a.placeid, b.name,
-                CAST(b.ratings AS FLOAT) AS ratings,
-                b.rating_count, b.search_link, b.photo_reference,
-                b.editorial_summary, b.type, c.sortorder
-            FROM placesadded a
-            LEFT JOIN places b
-                ON a.placeid = b.placeid
-            LEFT JOIN placesorder c
-                ON CONCAT(a.userid, a.location,
-                    ' (',CAST(a.date AS VARCHAR),')')
-                    = c.id
-            WHERE a.userid = %s
-            ORDER BY index;
-            """
-        cursor.execute(sql, session["_user_id"])
-        sql_results = cursor.fetchall()
-        print(sql_results)
+    conn, cursor = db.connect_to_db()
 
-    except Exception as e:
-        print(e)
-        return []
-
-    finally:
-        cursor.close()
-        conn.close()
+    sql = """
+        SELECT
+            CONCAT(a.location, ' (',CAST(a.date AS VARCHAR),')') AS trip,
+            a.id AS index, a.location, a.date, a.placeid, b.name,
+            CAST(b.ratings AS FLOAT) AS ratings,
+            b.rating_count, b.search_link, b.photo_reference,
+            b.editorial_summary, b.type, c.sortorder
+        FROM placesadded a
+        LEFT JOIN places b
+            ON a.placeid = b.placeid
+        LEFT JOIN placesorder c
+            ON CONCAT(a.userid, a.location,
+                ' (',CAST(a.date AS VARCHAR),')')
+                = c.id
+        WHERE a.userid = %s
+        ORDER BY index;
+        """
+    cursor.execute(sql, session["_user_id"])
+    sql_results = cursor.fetchall()
+    print(sql_results)
+    cursor.close()
+    conn.close()
 
     return sql_results
 
-
+# retrieve the locations saved to favourites.
+# The locations in each collection are 
+# stored in a list and grouped by the tripid.
+# The position of each location in the list 
+# is also sorted based on their saved sort
+# order (if any), to facilitate display 
+# frontend
 def get_favourites():
     try:
         results = retrieve_favourites()
@@ -62,6 +63,9 @@ def get_favourites():
             'sortorder']
         data = [{k: v for k, v in zip(keys, result)} for result in results]
 
+        # create a dictionary, with each tripid mapped to the 
+        # list of locations associated with the trip as well 
+        # as the sort order
         transformed_data = {}
         for entry in data:
             trip_id = entry['tripid']
@@ -82,7 +86,8 @@ def get_favourites():
                     'photo_reference': entry['photo_reference'],
                     'editorial_summary': entry['editorial_summary'],
                     'type': entry['type']})
-
+        # sort the list of locations according to the saved 
+        # sort order if it is available
         for trip_data in transformed_data.values():
             if trip_data["sortorder"] is not None:
                 if (len(trip_data["sortorder"]) ==
@@ -97,7 +102,8 @@ def get_favourites():
         print(e)
         return []
 
-
+# function to save the sorted order of the 
+# locations into the databse
 def save_favourites_order(sortedList):
     try:
 
@@ -117,16 +123,19 @@ def save_favourites_order(sortedList):
         conn.commit()
         cursor.close()
         conn.close()
-        return {"status": "success!"}
-#     userid VARCHAR NOT NULL,
-#     sortorder INTEGER[]
-# )
+        return {"status": "Success!"}
 
     except Exception as e:
         print(e)
-        return []
+        cursor.close()
+        conn.close()
+        return {"status":"Failed!"}
 
-
+# API call to google routes to get the 
+# optimize path based on the list of 
+# placeID provided. It will return a
+# list of the optimized order of the 
+# intermediate waypoints.
 def get_route(placeID_list, api_key):
     url = 'https://routes.googleapis.com/directions/v2:computeRoutes'
     payload = {
@@ -146,6 +155,9 @@ def get_route(placeID_list, api_key):
         'X-Goog-Api-Key': api_key,
         'X-Goog-FieldMask': 'routes.optimizedIntermediateWaypointIndex'
     }
-
-    response = requests.post(url, data=json.dumps(payload), headers=headers)
+    response = requests.post(url, data=json.dumps(payload), headers=headers)    
     return response.json()["routes"][0]['optimizedIntermediateWaypointIndex']
+
+
+    
+
