@@ -16,6 +16,93 @@
     --tw-bg-opacity: 1;
     background-color: rgb(12 47 151 / var(--tw-bg-opacity));
   }
+
+  .hidden {
+    display: none;
+}
+
+.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5); /* or any other background styling */
+    z-index: 1000; /* Ensure this is above other elements */
+}
+.star-rating {
+    display: inline-block;
+}
+.star-rating::before {
+    content: '★★★★★';
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, #fc0 calc(var(--rating) / 5 * 100%), #ddd calc(var(--rating) / 5 * 100%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}   
+/* vars */
+.teal { background: #A1DBDC; }
+
+@keyframes mapScroll {
+    from { transform: translate3d(0, 0, 0)}
+    to {transform: translate3d(375px, 0, 0)}
+}
+
+@keyframes planeMove {
+0% {transform: translate(0%, -45%) rotate(-2deg) }
+100% { transform: translate(0%, -90%) }
+}
+section {
+padding: 50px;
+display: block;
+text-align: center;
+}
+
+.globe {
+position: relative;
+display: inline-block;
+}
+
+.circle {
+position: relative;
+display: block;
+margin: 0 auto;
+width: 100%; height: 100%;
+border-radius: 50%;
+overflow: hidden;
+width: 128px; height: 128px;
+}
+
+.circle:after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: #A1DBDC; 
+    z-index: -1;
+}
+
+.map {
+position: absolute;
+background: url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg') repeat-x center;
+background-size: 375px;
+width: 1500px;
+top: 0; bottom: 0;
+right: 0;
+animation: mapScroll 10s linear infinite;
+}
+
+.plane {
+position: absolute;
+top: 50%;
+transform: translateY(-50%);
+right: -20px;
+animation: planeMove 1.75s ease-in-out infinite;
+/* animation-play-state: running; */
+animation-direction: alternate;
+}
   
   .text-logo-contrast {
       --tw-text-opacity: 1;
@@ -363,3 +450,4 @@ html { overflow-y: scroll; }
 	top: -90px;
   z-index:10;
 }
+

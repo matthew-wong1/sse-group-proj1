@@ -39,19 +39,13 @@ def load_user(user_id):
 
 
 # Configure routing
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
-    print(session)
-    return render_template("index.html")
+    status = request.args.get('status')
+    query = request.args.get('query')
+    show_alert = (status == "no_results")
 
-
-@app.route("/things-to-do", methods=["POST"])
-def things_to_do():
-    request_data = {
-        "destination": request.form.get("destination"),
-        "date": request.form.get("date"),
-    }
-    return request_data
+    return render_template("index.html", show_alert=show_alert, query=query)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -134,7 +128,7 @@ def logout():
 @app.route("/restaurants", methods=["GET", "POST"])
 def show_restaurants():
     try:
-        api_key = os.getenv("GCLOUD_KEY", "")
+        api_key = os.environ.get("GCLOUD_KEY")
         if not api_key:
             app.logger.error("API key is empty")
             return jsonify({"error": "API key is empty"}), 400
@@ -146,11 +140,6 @@ def show_restaurants():
             "location": "London",
             "date": "2023-01-01",
         }
-        # example dictionary from the post.
-        # {"location":"London", "placeid": "placeid01",
-        #  "name":"London Eye", "date": "2023-01-01"}
-
-        # Handling for POST request
         # Note default data wont be required in real
         if request.method == "POST":
             routes_data = request.get_json() or {}
@@ -203,6 +192,7 @@ def show_restaurants():
 
         # this will update the bool value for if heart should be red or not.
         top_restaurants_dict = hres.is_restaurant_saved(top_restaurants_dict)
+
     except HTTPError as e:
         # This will catch HTTP errors, which occur when HTTP request
         # returned an unsuccessful status code
@@ -210,12 +200,12 @@ def show_restaurants():
         return jsonify({"error": str(e)}), 500
     except json.JSONDecodeError:
         app.logger.exception("JSON Decode Error")
-        return jsonify({"error": "Invalid JSON response"}), 500
-    except RequestException as e:
+        return jsonify({"error": "No restaurants found in the radius :("}), 500
+    except RequestException:
         # This will catch any other exception thrown by
         # the requests library (such as a connection error)
         app.logger.exception("Network-related error occurred")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Please check your internet connection"}), 500
     except Exception as e:
         app.logger.exception("An unexpected error occurred")
         return jsonify({"error": str(e)}), 500
@@ -240,6 +230,9 @@ def show_restaurants():
         restaurants=top_restaurants_dict,
         map_html=map_html,
         search_details=search_details,
+        to_do_coords=[lng, lat],
+        lat_long=restaurant_data,
+        mapbox_key=os.environ.get("MAPBOX_KEY")
     )
 
 
@@ -442,6 +435,9 @@ def get_places():
     date = request.args.get('date')
     print("imhere")
     places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
+    if len(places) == 0:
+        return redirect(url_for('index', status="no_results", query=location))
+
     cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
     cinfo_all = {**plc.get_cinfo(cname["country_name"]),
                  **plc.get_weather(places[0]["longlat"], date),
