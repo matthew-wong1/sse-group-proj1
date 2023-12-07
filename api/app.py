@@ -440,6 +440,7 @@ def favourites_save():
 def get_places():
     location = request.args.get('location')
     date = request.args.get('date')
+    print("imhere")
     places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
     cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
     cinfo_all = {**plc.get_cinfo(cname["country_name"]),
