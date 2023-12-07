@@ -201,7 +201,7 @@ def show_restaurants():
     except json.JSONDecodeError:
         app.logger.exception("JSON Decode Error")
         return jsonify({"error": "No restaurants found in the radius :("}), 500
-    except RequestException as e:
+    except RequestException:
         # This will catch any other exception thrown by
         # the requests library (such as a connection error)
         app.logger.exception("Network-related error occurred")

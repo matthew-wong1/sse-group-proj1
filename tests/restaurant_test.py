@@ -1,16 +1,11 @@
-from helpers.restaurant import (
-    generate_map,
-    fetch_place_details,
-    # parse_request_parameters,
-    search_nearby_restaurants,
-    # process_restaurant_data,
-    sort_and_slice_restaurants,
-    # fetch_additional_details,
-)
-
+import os
 import unittest.mock as mock
 
-import os
+# parse_request_parameters,;
+# process_restaurant_data,; fetch_additional_details,
+from helpers.restaurant import (fetch_place_details, generate_map,
+                                search_nearby_restaurants,
+                                sort_and_slice_restaurants)
 
 api_key = os.getenv("GCLOUD_KEY", "")
 place_id = "ChIJz-VvsdMEdkgR1lQfyxijRMw"  # default place id
