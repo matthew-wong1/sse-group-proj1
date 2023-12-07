@@ -89,3 +89,16 @@ def add_user(username, password):
     conn.commit()
 
     conn.close()
+
+def update_user(user_id, password):
+    hash = salt_and_hash(password)
+    conn, cursor = connect_to_db()
+    params = (password, user_id)
+
+    cursor.execute("""UPDATE users
+        SET password=%s
+        WHERE id=%s""", params)
+    conn.commit()
+
+    conn.close
+    
