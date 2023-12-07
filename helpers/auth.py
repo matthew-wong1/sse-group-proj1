@@ -13,10 +13,13 @@ def check_username(username, errors):
 def user_exists(username):
     conn, cursor = connect_to_db()
 
-    cursor.execute("""SELECT username FROM users""")
+    cursor.execute("""SELECT username
+                      FROM users
+                      WHERE username=%s""", [username])
     rec = cursor.fetchone()
 
     conn.close()
+
     return username in rec
 
 
