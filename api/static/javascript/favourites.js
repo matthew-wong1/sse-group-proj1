@@ -124,6 +124,7 @@ function optimize(tripid) {
   };
 
   if (listSortOrder[tripid].length > 2) {
+    console.log(listSortOrder[tripid]);
     fetch('/favourites/opt',options)
             .then(response => {
                 if (!response.ok) {
