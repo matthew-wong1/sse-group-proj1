@@ -20,7 +20,7 @@ def user_exists(username):
 
     conn.close()
 
-    return username in rec
+    return rec is not None
 
 
 def get_user_id(username):
