@@ -9,7 +9,7 @@ import helpers.connection as db
 import helpers.google_api as g_api
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
-                          user_exists)
+                          user_exists, update_user)
 
 app = Flask(__name__)
 
@@ -78,7 +78,7 @@ def signup():
 
     if request.method == "POST":
         errors = {}
-        username = request.form.get("username")
+        username = request.form.get("username").strip()
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
@@ -93,6 +93,29 @@ def signup():
     return render_template("signup.html")
 
 
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    if request.method == "POST":
+        errors = {}
+        success = False
+        password_old = request.form.get("password_old")
+        password = request.form.get("password")
+        repeat_password = request.form.get("repeat_password")
+        
+        if(not match_password(session['username'], password_old)):
+            errors['password_old'] = "Incorrect password"
+
+        check_password(password, repeat_password, errors)
+
+        if success:
+            update_user(session['_user_id'], password)
+
+        # if errors empty, render success text? 
+        return render_template("settings.html", errors=errors)
+    return render_template("settings.html")
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if '_user_id' in session:
@@ -100,10 +123,10 @@ def login():
 
     errors = {}
     if request.method == "POST":
-        username = request.form.get("username")
+        username = request.form.get("username").strip()
         password = request.form.get("password")
 
-        if (user_exists(username) or not match_password(username, password)):
+        if(not user_exists(username) or (user_exists and not match_password(username, password))):
             errors['login'] = 'Incorrect username or password'
             return render_template("login.html",
                                    username=username,
