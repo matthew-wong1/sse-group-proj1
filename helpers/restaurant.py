@@ -1,6 +1,6 @@
 import folium
 import requests
-from flask import request
+from flask import request, session
 from requests.utils import quote
 
 from helpers.connection import connect_to_db
@@ -246,7 +246,11 @@ def fetch_additional_details(api_key, top_restaurants_dict,
 def is_restaurant_saved(restaurants):
     try:
         conn, cursor = connect_to_db()
-        cursor.execute("SELECT placeid FROM places")
+        # cursor.execute("SELECT placeid FROM places")
+        cursor.execute("""
+                       SELECT placeid FROM placesadded
+                       WHERE userid = %s AND date = %s
+                       """, (session["_user_id"], restaurants["date"]))
         # get a tuple of all the placeids from places table
         saved_restaurants_records = cursor.fetchall()
         conn.commit()
