@@ -148,5 +148,4 @@ def get_route(placeID_list, api_key):
     }
 
     response = requests.post(url, data=json.dumps(payload), headers=headers)
-    print(response.json())
     return response.json()["routes"][0]['optimizedIntermediateWaypointIndex']

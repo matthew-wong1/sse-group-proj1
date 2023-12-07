@@ -428,7 +428,6 @@ def favourites():
 
 @app.route("/favourites/opt", methods=["POST"])
 def favourites_optimize():
-    print(request.get_json())
     return fav.get_route(request.get_json(), os.environ.get("GCLOUD_KEY"))
 
 
