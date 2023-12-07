@@ -50,6 +50,8 @@ def index():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    if '_user_id' in session:
+        return redirect("/")
 
     if request.method == "POST":
         errors = {}
@@ -412,6 +414,7 @@ def delete_restaurant():
 
 
 @app.route("/favourites", methods=["GET"])
+@login_required
 def favourites():
     favr = fav.get_favourites()
     fav_json = {'data': favr}
