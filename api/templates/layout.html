@@ -8,12 +8,16 @@
 		
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css"  rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+		<script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
+		<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.js"></script>
+		<script src="https://kit.fontawesome.com/effb522364.js" crossorigin="anonymous"></script>
     <link href="./static/css/output.css" rel="stylesheet">
 	</head>
 	<body class="bg-main">
 
     <nav class="bg-logo dark:bg-gray-900">
-      <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+      <div class="max-w-screen-2xl flex flex-wrap items-center justify-between mx-auto p-4">
       <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
           <img src="./static/images/logo.png" class="h-10" alt="Flowbite Logo">
           <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">VOYAGE</span>
@@ -30,7 +34,7 @@
      
       </div>
     </nav>
-    <div class="p-nav">
+    <div>
     {% block body %}
 		{% endblock %}
     </div>

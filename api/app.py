@@ -9,6 +9,8 @@ from flask_login import (LoginManager, UserMixin, login_required, login_user,
 from requests.exceptions import HTTPError, RequestException
 
 import helpers.connection as db
+import helpers.favourites as fav
+import helpers.places as plc
 import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
@@ -178,7 +180,6 @@ def show_restaurants():
 
         # this will update the bool value for if heart should be red or not.
         top_restaurants_dict = hres.is_restaurant_saved(top_restaurants_dict)
-
     except HTTPError as e:
         # This will catch HTTP errors, which occur when HTTP request
         # returned an unsuccessful status code
@@ -211,7 +212,6 @@ def show_restaurants():
 
     # Generate map HTML using to_do lat and logn
     map_html = hres.generate_map(restaurant_data, lat, lng, dist)
-
     return render_template(
         "restaurants.html",
         restaurants=top_restaurants_dict,
@@ -227,11 +227,17 @@ def save_restaurant():
     conn = None
     cursor = None
     try:
-        # data will be from the JS passing the dictionary of info
-        data = request.json
-
+        if request.args:
+            data = plc.get_place_details(request.args.get('placeid'),
+                                         request.args.get('date'),
+                                         request.args.get('location'),
+                                         os.environ.get("GCLOUD_KEY"))
+            if isinstance(data.get('photo_reference'), list):
+                data['photo_reference'] = data['photo_reference'][0]
+        else:
+            # data will be from the JS passing the dictionary of info
+            data = request.json
         conn, cursor = db.connect_to_db()
-
         # Step 1: Check if the row exists for place_id
         # Check if the row exists using EXISTS
         check_query = """
@@ -288,27 +294,27 @@ def save_restaurant():
                 ),
             )
 
-            # TEMP userid BEING USED!
-            userid = session["_user_id"]
-            # userid = "tp4646"
+        # TEMP userid BEING USED!
+        userid = session["_user_id"]
 
-            # Insert into placesadded table
-            # this table will be unique so no need for a check
-            insert_query = """
-                INSERT INTO placesadded (userid, location, date, placeid)
-                VALUES (%s, %s, %s, %s)
-            """
-            cursor.execute(
-                insert_query,
-                (
-                    userid,
-                    data["location"],
-                    data["date"],
-                    data["place_id"],
-                ),
-            )
+        # userid = "tp4646"\
+        # Insert into placesadded table
+        # this table will be unique so no need for a check
+        insert_query = """
+            INSERT INTO placesadded (userid, location, date, placeid)
+            VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(
+            insert_query,
+            (
+                userid,
+                data["location"],
+                data["date"],
+                data["place_id"],
+            ),
+        )
 
-            conn.commit()
+        conn.commit()
 
     except Exception as e:
         print(e)
@@ -330,8 +336,15 @@ def delete_restaurant():
     if '_user_id' not in session:
         # User is not logged in, redirect to login page
         return redirect(url_for("login"))
-
-    data = request.json
+    if request.args:
+        data = plc.get_place_details(request.args.get('placeid'),
+                                     request.args.get('date'),
+                                     request.args.get('location'),
+                                     os.environ.get("GCLOUD_KEY"))
+        if isinstance(data.get('photo_reference'), list):
+            data['photo_reference'] = data['photo_reference'][0]
+    else:
+        data = request.json
     # Retrieve user_id from session
     userid = session["_user_id"]
     # userid = "tp4646"
@@ -380,3 +393,43 @@ def delete_restaurant():
         "status": "success",
         "message": "Operation completed successfully",
     }
+
+
+@app.route("/favourites", methods=["GET"])
+def favourites():
+    favr = fav.get_favourites()
+    fav_json = {'data': favr}
+    return render_template("favourites.html",
+                           fav_json=json.dumps(fav_json), fav=favr)
+
+
+@app.route("/favourites/opt", methods=["POST"])
+def favourites_optimize():
+    return fav.get_route(request.get_json(), os.environ.get("GCLOUD_KEY"))
+
+
+@app.route("/favourites/save", methods=["POST"])
+def favourites_save():
+    return fav.save_favourites_order(request.get_json())
+
+
+@app.route("/places", methods=["GET"])
+def get_places():
+    location = request.args.get('location')
+    date = request.args.get('date')
+    places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
+    cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
+    cinfo_all = {**plc.get_cinfo(cname["country_name"]),
+                 **plc.get_weather(places[0]["longlat"], date),
+                 "name": plc.fuzzy_match(location, cname)}
+    return render_template("places.html",
+                           places=places,
+                           cinfo=cinfo_all)
+
+
+@app.route("/places/details", methods=["GET"])
+def get_place_details():
+    return plc.get_place_details(request.args.get('placeid'),
+                                 request.args.get('date'),
+                                 request.args.get('location'),
+                                 os.environ.get("GCLOUD_KEY"))
