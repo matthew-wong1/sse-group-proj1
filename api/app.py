@@ -130,13 +130,119 @@ def logout():
     return redirect("/")
 
 
-@app.route('/test')
-@login_required
-def test():
-    return ("Hello")
+@app.route("/restaurants", methods=["GET", "POST"])
+def show_restaurants():
+    try:
+        api_key = os.getenv("GCLOUD_KEY", "")
+        if not api_key:
+            app.logger.error("API key is empty")
+            return jsonify({"error": "API key is empty"}), 400
+
+        # Default data
+        default_data = {
+            "place_id": "ChIJz-VvsdMEdkgR1lQfyxijRMw",
+            "name": "Default: China Town",
+            "location": "London",
+            "date": "2023-01-01",
+        }
+        # example dictionary from the post.
+        # {"location":"London", "placeid": "placeid01",
+        #  "name":"London Eye", "date": "2023-01-01"}
+
+        # Handling for POST request
+        # Note default data wont be required in real
+        if request.method == "POST":
+            routes_data = request.get_json() or {}
+            place_id = routes_data.get("place_id", default_data["place_id"])
+            name = routes_data.get("name", default_data["name"])
+            # location of the search e.g. London
+            location = routes_data.get("location", default_data["location"])
+            date = routes_data.get("date", default_data["date"])
+        else:
+            # For a GET request, use query parameters
+            # Get request shouldnt happen?
+            place_id = request.args.get("place_id", default_data["place_id"])
+            name = request.args.get("name", default_data["name"])
+            location = request.args.get("location", default_data["location"])
+            date = request.args.get("date", default_data["date"])
+
+        keyword_string, price, dist, open_q = hres.parse_request_parameters()
+
+        # details return to the Jinja
+        search_details = {
+            "name": name,
+            "keyword": keyword_string,
+            "price": price,
+            "dist": dist,
+            "open": open_q,
+        }
+
+        lat, lng = hres.fetch_place_details(api_key, place_id)
+        if not lat or not lng:
+            return "Failed to retrieve place details", 500
+
+        # Search nearby restaurants
+        nearby_data = hres.search_nearby_restaurants(
+            api_key, lat, lng, keyword_string, dist, price, open_q
+        )
+        if "status" not in nearby_data or nearby_data["status"] != "OK":
+            return "Failed to retrieve data", 500
+
+        # Process and sort restaurants
+        all_restaurants = hres.process_restaurant_data(nearby_data)
+        top_restaurants_dict = hres.sort_and_slice_restaurants(
+            all_restaurants
+        )
+
+        # Fetch additional details
+        # date and location of original search added to all for database
+        top_restaurants_dict = hres.fetch_additional_details(
+            api_key, top_restaurants_dict, date, location
+        )
+
+        # this will update the bool value for if heart should be red or not.
+        top_restaurants_dict = hres.is_restaurant_saved(top_restaurants_dict)
+    except HTTPError as e:
+        # This will catch HTTP errors, which occur when HTTP request
+        # returned an unsuccessful status code
+        app.logger.exception("HTTP Error occurred")
+        return jsonify({"error": str(e)}), 500
+    except json.JSONDecodeError:
+        app.logger.exception("JSON Decode Error")
+        return jsonify({"error": "Invalid JSON response"}), 500
+    except RequestException as e:
+        # This will catch any other exception thrown by
+        # the requests library (such as a connection error)
+        app.logger.exception("Network-related error occurred")
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        app.logger.exception("An unexpected error occurred")
+        return jsonify({"error": str(e)}), 500
+
+    # Prepare data for map generation
+    restaurant_data = [
+        {
+            "name": details["name"],
+            "lat": details["latitude"],
+            "lng": details["longitude"],
+            "website_url": details["website"],
+            "image_url": details["photo_url"],
+            "ratings": details["rating"],
+        }
+        for name, details in top_restaurants_dict.items()
+    ]
+
+    # Generate map HTML using to_do lat and logn
+    map_html = hres.generate_map(restaurant_data, lat, lng, dist)
+    return render_template(
+        "restaurants.html",
+        restaurants=top_restaurants_dict,
+        map_html=map_html,
+        search_details=search_details,
+    )
 
 
-@app.route('/save-restaurant', methods=['POST'])
+@app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
     if '_user_id' not in session:
         return redirect(url_for("login"))
@@ -154,12 +260,81 @@ def save_restaurant():
             # data will be from the JS passing the dictionary of info
             data = request.json
         conn, cursor = db.connect_to_db()
+        # Step 1: Check if the row exists for place_id
+        # Check if the row exists using EXISTS
+        check_query = """
+            SELECT EXISTS(
+                SELECT 1 FROM places
+                WHERE placeid = %s
+            )
+        """
+        cursor.execute(check_query, (data["place_id"],))
+        exists = cursor.fetchone()[0]
 
-        sql = """INSERT INTO restaurants (name, latitude, longitude,
-                                          rating, num_ratings)
-                 VALUES (%s, %s, %s, %s, %s)"""
-        cursor.execute(sql, (data['name'], data['latitude'], data['longitude'],
-                             data['rating'], data['num_user_ratings']))
+        # Step 2: Update or Insert based on the check
+        if exists:
+            # Update
+            update_query = """
+                UPDATE places
+                SET name = %s, ratings = %s, rating_count = %s,
+                search_link = %s, photo_reference = %s,
+                editorial_summary = %s, type = %s
+                WHERE placeid = %s
+            """
+            cursor.execute(
+                update_query,
+                (
+                    data["name"],
+                    data["ratings"],
+                    data["rating_count"],
+                    data["search_link"],
+                    data["photo_reference"],
+                    data["editorial_summary"],
+                    "restaurant",
+                    data["place_id"],
+                ),
+            )
+        else:
+            # Insert
+            insert_query = """
+                INSERT INTO places (placeid, name, ratings,
+                rating_count, search_link, photo_reference,
+                editorial_summary, type)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(
+                insert_query,
+                (
+                    data["place_id"],
+                    data["name"],
+                    data["ratings"],
+                    data["rating_count"],
+                    data["search_link"],
+                    data["photo_reference"],
+                    data["editorial_summary"],
+                    "restaurant",
+                ),
+            )
+
+        # TEMP userid BEING USED!
+        userid = session["_user_id"]
+
+        # userid = "tp4646"\
+        # Insert into placesadded table
+        # this table will be unique so no need for a check
+        insert_query = """
+            INSERT INTO placesadded (userid, location, date, placeid)
+            VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(
+            insert_query,
+            (
+                userid,
+                data["location"],
+                data["date"],
+                data["place_id"],
+            ),
+        )
 
         conn.commit()
 
@@ -198,7 +373,31 @@ def delete_restaurant():
 
     try:
         conn, cursor = db.connect_to_db()
-        cursor.execute("DELETE FROM restaurants WHERE name = %s", (name,))
+
+        # Delete the entry from the second table
+        sql_delete_table2 = (
+            "DELETE FROM placesadded WHERE userid"
+            " = %s AND location = %s "
+            "AND date = %s AND placeid = %s"
+        )
+        cursor.execute(
+            sql_delete_table2,
+            (userid, data["location"], data["date"], data["place_id"]),
+        )
+
+        # Check if no users have place_id in placesadded table
+        sql_check = (
+            "SELECT EXISTS (SELECT 1 FROM placesadded WHERE placeid = %s)"
+        )
+        cursor.execute(sql_check, (data["place_id"],))
+        # Check if any row exists in table2 with the given place_id
+        exists = cursor.fetchone()[0]
+
+        # If place_id is not in the placesadded table i.e. user table
+        if not exists:
+            sql_delete_table1 = "DELETE FROM places WHERE placeid = %s"
+            cursor.execute(sql_delete_table1, (data["place_id"],))
+
         conn.commit()
 
     except Exception as e:
@@ -212,7 +411,50 @@ def delete_restaurant():
         if conn:
             conn.close()
 
-    return {'status': 'success'}
+    return {
+        "status": "success",
+        "message": "Operation completed successfully",
+    }
+
+
+@app.route("/favourites", methods=["GET"])
+def favourites():
+    favr = fav.get_favourites()
+    fav_json = {'data': favr}
+    return render_template("favourites.html",
+                           fav_json=json.dumps(fav_json), fav=favr)
+
+
+@app.route("/favourites/opt", methods=["POST"])
+def favourites_optimize():
+    return fav.get_route(request.get_json(), os.environ.get("GCLOUD_KEY"))
+
+
+@app.route("/favourites/save", methods=["POST"])
+def favourites_save():
+    return fav.save_favourites_order(request.get_json())
+
+
+@app.route("/places", methods=["GET"])
+def get_places():
+    location = request.args.get('location')
+    date = request.args.get('date')
+    places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
+    cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
+    cinfo_all = {**plc.get_cinfo(cname["country_name"]),
+                 **plc.get_weather(places[0]["longlat"], date),
+                 "name": plc.fuzzy_match(location, cname)}
+    return render_template("places.html",
+                           places=places,
+                           cinfo=cinfo_all)
+
+
+@app.route("/places/details", methods=["GET"])
+def get_place_details():
+    return plc.get_place_details(request.args.get('placeid'),
+                                 request.args.get('date'),
+                                 request.args.get('location'),
+                                 os.environ.get("GCLOUD_KEY"))
 
 
 @app.errorhandler(404)
