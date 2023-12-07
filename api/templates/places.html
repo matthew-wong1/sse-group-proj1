@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="flex bg-slate-200 w-screen h-full flex-col items-center">
+	<div class ="flex mb-4"></div>
+	<div class="fixed top-0  left-0 z-20 w-[100%] h-[100%] bg-black bg-opacity-50 overlay items-center justify-center" onclick="hideOverlay()" style ="display:none">
+		<div class="flex flex-col bg-slate-200 justify-start shadow-lg rounded-lg z-30 h-fit w-fit p-5 absolute" style="display: none" id="overlayDetails" >
+			<div class="flex flex-col rounded-lg bg-white">
+				<div class="flex justify-between">
+					<h1 class="pl-5 flex text-6xl font-roboto text-gray-800 font-semibold mb-3 mt-2 pt-2 pointer-events-none" id="overlay-title"></h1>
+					<div class="flex flex-col">
+						<div>
+							<span class = "font-roboto text-gray-600 text-lg mr-3 ml-8">Food Options:</span>
+							<!---<i class="fa-solid cursor-pointer fa-beer-mug-empty mr-3 pt-2 text-xl text-gray-800" onclick="searchFood()" id='food'></i>
+							<i class="fa-solid cursor-pointer fa-mug-saucer mr-3 pt-2 text-xl text-gray-800" onclick="searchFood()" id='food'></i> -->
+							<i class="fa-solid cursor-pointer fa-utensils pt-2 text-xl text-gray-800" onclick="searchFood()" id='food'></i>
+						</div>
+						<div>
+							<span class = "font-roboto text-gray-600 text-lg mr-3">Add to Favourites?</span><i id="heart-in-details" class="fa-heart text-red-500 text-xl cursor-pointer mr-3" onclick="toggleHeartInDet()"></i>
+						</div>
+						
+					</div>
+				</div>
+				<p class="pl-5 font-roboto text-gray-600 my-1 pointer-events-none" id="overlay-desc"></p>
+			</div>
+
+			<div id="imageGrid" class="flex h-full items-center justify-start gap-2 px-5 rounded-lg w-max py-2 bg-white mt-2">
+				
+			</div>
+			
+		</div>
+	</div>
+
+	<div class =" flex justify-between w-[90%] mx-10 pr-5 pointer-events-none">
+		<div class = "max-w-[60%]">
+				<h1 class="font-black font-oswald text-9xl overflow-hidden relative z-10">{{cinfo["name"]}}</h1> 
+			<div class = "rain front-row " id="weather"></div>
+		</div>
+		<div class="flex">
+			<div class="flex justify-between">
+
+				<div class="flex flex-col ml-5 pt-3 z-10">
+					<p class="flex pt-4 pl-5 text-lg font-roboto text-gray-600">Temp:</p>
+					<p class="flex pt-1 pl-5 text-lg font-roboto text-gray-700 font-semibold">{{ cinfo["min_temp"] }} - {{ cinfo["max_temp"] }}</p> 
+				</div>
+				<div class="flex flex-col ml-5 pt-3 z-10">
+					<p class="flex pt-4 pl-5 text-lg font-roboto text-gray-600">Daylight:</p>
+					<p class="flex pt-1 pl-5 text-lg font-roboto text-gray-700 font-semibold">{{cinfo["daylight"]}} hours</p> 
+				</div>
+			</div>
+			
+			<div class="flex flex-col ml-5 pt-3 z-10">
+				<p class="flex pt-4 pl-5 text-lg font-roboto text-gray-600">Currency:</p>
+				<p class="flex pt-1 pl-5 text-lg font-roboto text-gray-700 font-semibold">{{cinfo["currencies"]}}</p> 
+			</div>
+
+			<div class="flex flex-col ml-5 pt-3 z-10">
+				<p class="flex pt-4 pl-5 text-lg font-roboto text-gray-600">Language:</p>
+				<p class="flex pt-1 pl-5 text-lg font-roboto text-gray-700 font-semibold">{% for key,value in cinfo["languages"].items() %}
+					{{value}}
+					{% endfor %}</p> 
+			</div>
+				
+		
+		</div>
+	</div>
+
+	
+	<div class="jqueryGrid w-14">
+		<div class="jqueryGrid-sizer"></div>
+
+		{% for place in places %}
+		<div class="relative jqueryGrid-item p-2">
+			<img class='shadow-xl' src={{place.photo}} />
+			<div class="flex items-center justify-center absolute inset-2 rounded-lg bg-white opacity-0 hover:opacity-50 transition duration-300 cursor-pointer" placeid = {{place.place_id}}>
+				<p class="whitespace-normal overflow-hidden text-center font-roboto font-bold text-5xl pointer-events-none">{{place.name}}</p>
+				<i id="heart-in-{{place.place_id}}" class=" {{ 'fas' if place.get('is_saved', False) else 'far' }} absolute bottom-2 right-0 fa-heart text-red-500 text-3xl cursor-pointer mr-3" onclick="toggleHeartInList('{{place.place_id}}')"></i>
+			</div>
+		</div>
+		{% endfor %}
+	</div>	  
+</div>
+
+<script>
+	const weatherData = "{{cinfo['weather']}}";
+	const search_date = "{{places[0]['date']}}";
+	const search_location = "{{places[0]['location']}}";
+	console.log(search_date);
+</script>
+<script src="{{ url_for('static', filename='/javascript/places.js') }}"></script>
+
+{% endblock %}

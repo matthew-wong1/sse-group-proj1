@@ -1,12 +1,17 @@
+import json
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, request, session
+from flask import (Flask, jsonify, redirect, render_template, request, session,
+                   url_for)
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
+from requests.exceptions import HTTPError, RequestException
 
 import helpers.connection as db
-import helpers.google_api as g_api
+import helpers.favourites as fav
+import helpers.places as plc
+import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
                           user_exists, update_user)
@@ -47,30 +52,6 @@ def things_to_do():
         "date": request.form.get("date"),
     }
     return request_data
-
-
-@app.route("/restaurants", methods=["POST"])
-def restaurants():
-    # Parse data from form
-    request_data = {
-        "destination": request.form.get("destination"),
-        "date": request.form.get("date"),
-    }
-
-    load_dotenv()
-    api_key = os.environ.get("GCLOUD_KEY")
-    lat, lng = g_api.get_coordinates(request_data["destination"], api_key)
-
-    if lat is not None and lng is not None:
-        center = (lat, lng)
-        restaurants = g_api.get_restaurants(lat, lng, 1000,
-                                            None, True, api_key)
-
-    # restaurants = db.is_restaurant_saved(restaurants)
-    print(restaurants)
-
-    return render_template("restaurants.html",
-                           restaurants=restaurants, center=center)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -149,10 +130,29 @@ def logout():
     return redirect("/")
 
 
+@app.route('/test')
+@login_required
+def test():
+    return ("Hello")
+
+
 @app.route('/save-restaurant', methods=['POST'])
 def save_restaurant():
+    if '_user_id' not in session:
+        return redirect(url_for("login"))
+    conn = None
+    cursor = None
     try:
-        data = request.json
+        if request.args:
+            data = plc.get_place_details(request.args.get('placeid'),
+                                         request.args.get('date'),
+                                         request.args.get('location'),
+                                         os.environ.get("GCLOUD_KEY"))
+            if isinstance(data.get('photo_reference'), list):
+                data['photo_reference'] = data['photo_reference'][0]
+        else:
+            # data will be from the JS passing the dictionary of info
+            data = request.json
         conn, cursor = db.connect_to_db()
 
         sql = """INSERT INTO restaurants (name, latitude, longitude,
@@ -165,30 +165,52 @@ def save_restaurant():
 
     except Exception as e:
         print(e)
-        return {'status': 'error', 'message': str(e)}
+        return {"status": "error", "message": str(e)}
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
-    return {'status': 'success'}
+    return {"status": "success"}
 
 
-@app.route('/delete-restaurant', methods=['POST'])
+@app.route("/delete-restaurant", methods=["POST"])
 def delete_restaurant():
-    data = request.json
-    name = data['name']
+    conn = None
+    cursor = None
+    if '_user_id' not in session:
+        # User is not logged in, redirect to login page
+        return redirect(url_for("login"))
+    if request.args:
+        data = plc.get_place_details(request.args.get('placeid'),
+                                     request.args.get('date'),
+                                     request.args.get('location'),
+                                     os.environ.get("GCLOUD_KEY"))
+        if isinstance(data.get('photo_reference'), list):
+            data['photo_reference'] = data['photo_reference'][0]
+    else:
+        data = request.json
+    # Retrieve user_id from session
+    userid = session["_user_id"]
+    # userid = "tp4646"
 
     try:
         conn, cursor = db.connect_to_db()
         cursor.execute("DELETE FROM restaurants WHERE name = %s", (name,))
         conn.commit()
+
     except Exception as e:
-        print(e)
-        return {'status': 'error', 'message': str(e)}
+        conn.rollback()  # Rollback the transaction in case of an error
+        # logging.error(e) Log the error
+        return {"status": "error", "message": str(e)}
+
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
     return {'status': 'success'}
 

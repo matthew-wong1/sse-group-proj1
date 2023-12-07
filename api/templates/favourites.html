@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+
+<div class="flex flex-wrap items-start bg-slate-100 text-gray-600 min-h-screen max-w-screen-full pl-4">
+	{% for favourite in fav %}
+	<div class="flex bg-gray-200 w-[47%] h-fit rounded-xl shadow-sm mx-5 mt-10">
+		<details class="bg-white shadow rounded-xl group w-full" open>
+			<summary class="w-full bg-gray-700 list-none flex justfity-between cursor-pointer
+			rounded-xl group-open:rounded-b-none group-open:z-[1] 
+			">
+				<h3 class="flex py-4 pl-5 text-3xl font-semibold w-full font-roboto text-white ">{{favourite.tripid}}</h3>
+					<div class="flex w-full items-center justify-end">
+						<div class="border-12 border-transparent border-l-white ml-2 pr-5
+						group-open:rotate-90 transition-transform origin-left
+						"></div>
+					</div>
+			</summary>
+			<div class="p-4">
+				<h1 class="flex pb-1 pl-5 text-3xl font-semibold w-full font-roboto">Route</h1>
+				<ul class="draggable-list" id="draggable-list-{{favourite.tripid}}">
+				</ul>
+				<div class="flex justify-end">
+					<button class="bg-logo-contrast hover:bg-logo-contrast-darker text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-3 mt-2 w-28" id="check" onclick="optimize('{{favourite.tripid}}')">Optimize</button>	
+					<button class="bg-logo-contrast hover:bg-logo-contrast-darker text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-4 mt-2 w-28" id="save" onclick="save('{{favourite.tripid}}')">Save</button>
+				</div>	
+			</div>
+		</details> 
+	</div>
+	{% endfor %}
+	
+</div>
+
+
+<script>
+	var places = `{{ fav_json | safe }}`;
+	places = JSON.parse(places)["data"] 
+</script>
+<script src="{{ url_for('static', filename='/javascript/favourites.js') }}"></script>
+
+
+
+
+{% endblock %}
