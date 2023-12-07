@@ -130,10 +130,8 @@ def get_weather(location, date):
     if ((date > current_datetime) & (date <= datetime_14_d)):
         weather_url = 'https://api.open-meteo.com/v1/forecast'
         weather_params = {
-            'latitude': f"{
-                location['lat']}",
-            'longitude': f"{
-                location['lng']}",
+            'latitude': f"{location['lat']}",
+            'longitude': f"{location['lng']}",
             'daily': "weather_code,temperature_2m_max,"
                      "temperature_2m_min,daylight_duration",
             'timezone': "GMT",
@@ -142,10 +140,8 @@ def get_weather(location, date):
     else:
         weather_url = 'https://archive-api.open-meteo.com/v1/archive'
         weather_params = {
-            'latitude': f"{
-                location['lat']}",
-            'longitude': f"{
-                location['lng']}",
+            'latitude': f"{location['lat']}",
+            'longitude': f"{location['lng']}",
             'daily': 'weather_code,temperature_2m_max,'
                      'temperature_2m_min,daylight_duration',
             'timezone': "GMT",
