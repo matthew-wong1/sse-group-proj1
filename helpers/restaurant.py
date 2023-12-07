@@ -1,3 +1,5 @@
+import os
+
 import folium
 import requests
 from flask import request, session
@@ -9,7 +11,27 @@ from helpers.connection import connect_to_db
 def generate_map(restaurant_data, to_do_lat, to_do_long, radius):
     try:
         # Center the map by calculating the average latitude and longitude
-        eq_map = folium.Map(location=[to_do_lat, to_do_long], zoom_start=14)
+        token = os.environ.get("MAPBOX_KEY")
+        mapbox_url = (
+            f"https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/512/"
+            f"{{z}}/{{x}}/{{y}}?access_token={token}"
+        )
+
+        attribution = (
+            "&copy; <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> "
+            "&copy; <a href='https://www.openstreetmap.org/about/'"
+            ">OpenStreetMap</a> "
+            "<strong><a href='https://www.mapbox.com/map-feedback/' "
+            "target='_blank'>Improve this map</a></strong>"
+        )
+
+        # Create the map centered on the central point
+        eq_map = folium.Map(
+            location=[to_do_lat, to_do_long],
+            zoom_start=14,
+            tiles=mapbox_url,
+            attr=attribution
+        )
 
         # Define two different icons for markers
         to_do_map_pin = folium.Icon(icon="map-pin", prefix="fa", color="red")
@@ -21,8 +43,6 @@ def generate_map(restaurant_data, to_do_lat, to_do_long, radius):
             # popup can be added if needed
             icon=to_do_map_pin,  # Use the red pin icon for to-do locations
         ).add_to(eq_map)
-
-        # radius =  2000
 
         folium.Circle(
             location=[to_do_lat, to_do_long],
