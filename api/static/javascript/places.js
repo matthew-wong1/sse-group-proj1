@@ -1,13 +1,5 @@
-/*document.addEventListener("DOMContentLoaded", function() {
-    // Initialize Masonry on the grid container
-    var grid = document.querySelector('.jqueryGrid');
-    var masonry = new Masonry(grid, {
-        itemSelector: '.jqueryGrid-item'
-    });
-    
-});
-*/
 
+// for the purpose of the masonry gallery foramatting
 var $stampElement = $('.stamp');
 var $grid = $('.jqueryGrid').masonry({
   itemSelector: '.jqueryGrid-item',
@@ -15,32 +7,27 @@ var $grid = $('.jqueryGrid').masonry({
   stamp: $stampElement 
 });
 
+// reload the grid after each image load
 $grid.imagesLoaded().progress(function() {
   $grid.masonry();
   
 });
 
-// external js: masonry.pkgd.js
-
-
-function handleClick() {
-    alert('Div clicked!');
-    // You can add any JavaScript code to handle the click event here
-}
-
+// hide overlay
 function hideOverlay() {
 	// Hide the overlay and details box
 	document.querySelector('.overlay').style.display = 'none';
 	document.querySelector('#overlayDetails').style.display = 'none';
 }
 
-
+// show the overlay
 function showOverlay() {
     // Show the overlay
     document.querySelector('.overlay').style.display = 'flex';
     document.querySelector('#overlayDetails').style.display = 'flex';
 }
 
+// get all elements with placid attr
 const elementsWithDataName = document.querySelectorAll('[placeid]');
 
 let placedetails;
@@ -48,70 +35,85 @@ let placedetails;
 // Add an event listener to elements with data-name attribute
 elementsWithDataName.forEach(element => {
 
-    // Event listener on the parent container or document
+    // Event listener to trigger the overlay being rendered 
+    // with the details of the place 
     element.addEventListener('click', function(event) {
         const placeID = event.target.getAttribute('placeid');
         if (placeID !== null) {
             fetch(`places/details?placeid=${encodeURIComponent(placeID)}&date=${encodeURIComponent(search_date)}&location=${encodeURIComponent(search_location)}`)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Network response was not ok.');
+                        alert("The details for this place are not available.");
                     }
                     return response.json();
                 })
                 .then(data => {
-                    // Handle the data received from the GET request
-                    console.log('Data received:', data);
+                    // if no details returned, short-circuit the chain
+                    if (Object.keys(data).length === 0) {
+                        alert("The details for this place are not available.");
+                        return;
+                    }
+
                     placedetails = data;
-                    // Update the title
+                    // Update the title and descriptions
                     document.getElementById('overlay-title').innerHTML = `${data.name}`;
                     document.getElementById('overlay-desc').innerHTML = `${data.editorial_summary}`;
-
+                    
+                    // update the heart status depending on
+                    // whether the location had been previously
+                    // saved to favourites
                     const heart = document.getElementById('heart-in-details');
                     if (data.is_saved === true) {
                         heart.classList.add('fas');
                     } else {
                         heart.classList.add('far');
                     }
+
                     // Update the content in the overlay with images
                     const imageGrid = document.getElementById('imageGrid');
                     // Clear previous content if needed
                     imageGrid.innerHTML = '';
 
-                    // Larger image
+                    // Larger image added
                     const largerImage = document.createElement('img');
                     largerImage.src = data.photo_reference[0]; // First image in the list is the larger image
-                    largerImage.className = 'h-[40rem] rounded-lg shadow-2xl'; // Apply Tailwind classes for responsiveness and margin
+                    largerImage.className = 'h-[40rem] rounded-lg shadow-2xl'; 
                     imageGrid.appendChild(largerImage);
 
+                    // Add the elements for the smaller images
                     const smallerImagesColumn = document.createElement('div');
                     smallerImagesColumn.className = ' flex flex-col justify-between h-[40rem]';        
 
-                    // Four smaller images (starting from index 1)
+                    // Three smaller images (starting from index 1)
                     for (let i = 1; i < 4; i++) {
                         const smallImage = document.createElement('img');
                         smallImage.src = data.photo_reference[i];
-                        smallImage.className = 'max-h-[13rem] rounded-lg shadow-2xl'; // Apply Tailwind classes for responsiveness
+                        smallImage.className = 'max-h-[13rem] rounded-lg shadow-2xl'; 
                         smallerImagesColumn.appendChild(smallImage);
                     };
-
+                    // Append the elements to the parent
                     imageGrid.appendChild(smallerImagesColumn);
-
-                    
 
                     // Show the overlay after updating content
                     showOverlay();
                 })
                 .catch(error => {
                     // Handle errors from the fetch or the response
-                    console.error(`There was a problem with the GET request for button with ID ${placeID}:`, error);
+                    alert("The details for this place are not available.");
                 });
         }
     });
 });
 
-// WEATHER 
+// prevent the click to propogating to the parent 
+document.getElementById('overlayDetails').addEventListener('click', function(event) {
+    event.stopPropagation();
+});
 
+// get the element that contains the weather ID
+const weatherElement  = document.getElementById("weather");
+ 
+// function for raining animation
 var makeItRain = function() {
     //clear out everything
     $('.rain').empty();
@@ -137,41 +139,30 @@ var makeItRain = function() {
     $('.rain.back-row').append(backDrops);
 }
 
-
-document.getElementById('overlayDetails').addEventListener('click', function(event) {
-    
-    event.stopPropagation();
-    
-});
-
-const weatherElement  = document.getElementById("weather");
-
-
+// set the class based on the weather 
 if (weatherData === "Rainy") {
   weatherElement.className = "rain front-row"
   makeItRain();
 } else if (weatherData === "Sunny") {
   weatherElement.className = "ball"
 } else if (weatherData == "Cloudy") {
+weatherElement.className = ""
   weatherElement.innerHTML = `
   <div id="background-wrap">
     <div class="x1">
         <div class="cloud"></div>
     </div>
-
     <div class="x2">
         <div class="cloud"></div>
     </div>
-
     <div class="x3">
         <div class="cloud"></div>
     </div>
-
 </div>
 `
 };
 
-//heart button
+// toggle heart button in the overlay
 function toggleHeartInDet() {
     
     const heartIcon = document.getElementById('heart-in-details');
@@ -230,14 +221,14 @@ function toggleHeartInDet() {
     });
 }
 
+// open the restaurant earch in a new tab
 function searchFood() {
-    
     window.open(`/restaurants?name=${encodeURIComponent(placedetails.name)}&place_id=${encodeURIComponent(placedetails.place_id)}&date=${encodeURIComponent(search_date)}&location=${encodeURIComponent(search_location)}`, '_blank');
 }
 
 
 
-//heart button
+// toggle heart button in the main page
 function toggleHeartInList(heart_placeid) {
     
     const heartIcon = document.getElementById(`heart-in-${heart_placeid}`);
