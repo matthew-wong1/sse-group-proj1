@@ -1,34 +1,39 @@
 {% extends "layout.html" %}
 
 {% block body %}
-  
+
+{% if show_alert %}
+<div class="fixed top-250 left-0 right-0 z-50 p-4 mb-4 text-sm text-red-800 bg-red-50 rounded-b-lg dark:bg-gray-800 dark:text-red-400" role="alert">
+    <span class="font-medium">Error!</span> No results found for: {{ query }}
+</div>
+{% endif %}
+
 <!-- Background picture and form -->
-<div class="bg-cover bg-center h-screen" style="background-image: url('https://images.pexels.com/photos/994605/pexels-photo-994605.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');">
+<div class="bg-cover bg-center h-screen" style="background-image: url('../static/images/homepage.jpg');">
 
-    <!-- Spacer -->
-    <div class="h-72"></div>
+<!-- Spacer -->
+<div class="h-24"></div>
+<div class="h-60"></div>
 
-    <!-- Big title -->
-    <div class="container mx-auto">
-        <h1 class="text-5xl text-center text-white font-semibold mb-6">Find great places to visit</h1>
-    </div>
+<!-- Big title -->
+<div class="container mx-auto mt-32">
+    <h1 class="text-5xl text-center text-white font-semibold mb-6">Find great places to visit</h1>
+</div>
 
-    <!-- Search form -->
-    <div class="container mx-auto">
-        <form action="/things-to-do" method="post" class="bg-white p-6 rounded shadow-md">
-            <!-- Destination box -->
-            <div class="flex justify-center items-center space-x-2">
-                <input type="text" name="destination" placeholder="Where do you want to go?" class="w-full p-3 rounded leading-tight focus:outline-none focus:shadow-outline text-gray-700 bg-gray-100" required />
+<!-- Search form -->
+<div class="container mx-auto mt-12">
+    <form action="/places" method="GET" class="bg-gray-200 p-6 rounded shadow-md">
+        <!-- Destination box -->
+        <div class="flex justify-center items-center space-x-2">
+            <input type="text" name="location" placeholder="Where do you want to go?" class="w-full p-3 rounded leading-tight focus:outline-none focus:shadow-outline text-gray-700 bg-gray-100" required />
 
-                <input type="date" name="date" class="w-full p-3 rounded leading-tight focus:outline-none focus:shadow-outline text-gray-700 bg-gray-100"/>
-                
-                <button type="submit" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline whitespace-nowrap min-w-[value]">
-                    Let's go!
-                </button>                
-            </div>
-        </form>
-    </div>
-
+            <input type="date" name="date" class="w-full p-3 rounded leading-tight focus:outline-none focus:shadow-outline text-gray-700 bg-gray-100"/>
+            
+            <button type="submit" class="bg-logo-contrast hover:bg-logo-contrast-darker text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline whitespace-nowrap min-w-[value]">
+                Let's go!
+            </button>
+        </div>
+    </form>
 </div>
 
 {% endblock %}

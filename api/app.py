@@ -39,19 +39,13 @@ def load_user(user_id):
 
 
 # Configure routing
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
-    print(session)
-    return render_template("index.html")
+    status = request.args.get('status')
+    query = request.args.get('query')
+    show_alert = (status == "no_results")
 
-
-@app.route("/things-to-do", methods=["POST"])
-def things_to_do():
-    request_data = {
-        "destination": request.form.get("destination"),
-        "date": request.form.get("date"),
-    }
-    return request_data
+    return render_template("index.html", show_alert=show_alert, query=query)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -441,6 +435,9 @@ def get_places():
     date = request.args.get('date')
     print("imhere")
     places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
+    if len(places) == 0:
+        return redirect(url_for('index', status="no_results", query=location))
+
     cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
     cinfo_all = {**plc.get_cinfo(cname["country_name"]),
                  **plc.get_weather(places[0]["longlat"], date),
