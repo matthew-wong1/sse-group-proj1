@@ -21,15 +21,6 @@
     display: none;
 }
 
-.fixed {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5); /* or any other background styling */
-    z-index: 1000; /* Ensure this is above other elements */
-}
 .star-rating {
     display: inline-block;
 }
@@ -119,11 +110,13 @@ animation-direction: alternate;
       color: rgb(9 35 113 / var(--tw-text-opacity));
   }
 
-  .p-nav {
-    padding: 5rem;
+  .p-form {
+    padding-top: 5rem;
   }
 
-
+  .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
   /* force scrollbar */
 html { overflow-y: scroll; }
 .jqueryGrid {
@@ -449,3 +442,6 @@ html { overflow-y: scroll; }
   z-index:10;
 }
 
+.backdrop {
+  z-index: -1; /* Negative z-index to position behind other elements */
+}

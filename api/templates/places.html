@@ -1,13 +1,22 @@
 {% extends "layout.html" %}
 
 {% block body %}
-<div class="flex bg-slate-200 w-screen h-full flex-col items-center">
+
+<div id="alert-popup" class="fixed top-20 z-50 left-1/2 transform -translate-x-1/2 flex items-center p-4 mb-4 rounded-lg text-red-800 border-t-4 shadow-2xl border-red-300 bg-red-50 opacity-100 transition-opacity duration-500" role="alert" style="display: none">
+    <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+    </svg>
+    <div id="alert-text" class="ms-3 text-sm font-medium">
+    </div>
+</div>
+
+<div class="flex bg-slate-200 w-screen h-full flex-col items-center backdrop">
 	<div class ="flex mb-4"></div>
 	<div class="fixed top-0  left-0 z-20 w-[100%] h-[100%] bg-black bg-opacity-50 overlay items-center justify-center" onclick="hideOverlay()" style ="display:none">
-		<div class="flex flex-col bg-slate-200 justify-start shadow-lg rounded-lg z-30 h-fit w-fit p-5 absolute" style="display: none" id="overlayDetails" >
-			<div class="flex flex-col rounded-lg bg-white">
+		<div class="flex flex-col bg-slate-200 justify-start items-center shadow-lg rounded-lg z-30 h-fit w-fit p-5 absolute" style="display: none" id="overlayDetails" >
+			<div class="flex flex-col rounded-lg bg-white w-full">
 				<div class="flex justify-between">
-					<h1 class="pl-5 flex text-6xl font-roboto text-gray-800 font-semibold mb-3 mt-2 pt-2 pointer-events-none" id="overlay-title"></h1>
+					<h1 class="pl-5 flex text-4xl font-roboto overflow-clip whitespace-normal text-gray-800 font-semibold mb-3 mt-2 pt-2 pointer-events-none" id="overlay-title"></h1>
 					<div class="flex flex-col">
 						<div>
 							<span class = "font-roboto text-gray-600 text-lg mr-3 ml-8">Food Options:</span>
@@ -21,10 +30,10 @@
 						
 					</div>
 				</div>
-				<p class="pl-5 font-roboto text-gray-600 my-1 pointer-events-none" id="overlay-desc"></p>
+				<p class="px-5 font-roboto overflow-auto break-normal whitespace-normal text-gray-600 my-1 pointer-events-none" id="overlay-desc"></p>
 			</div>
 
-			<div id="imageGrid" class="flex h-full items-center justify-start gap-2 px-5 rounded-lg w-max py-2 bg-white mt-2">
+			<div id="imageGrid" class="flex h-full items-center justify-between gap-2 px-5 rounded-lg w-max py-2 bg-white mt-2">
 				
 			</div>
 			
@@ -33,7 +42,7 @@
 
 	<div class =" flex justify-between w-[90%] mx-10 pr-5 pointer-events-none">
 		<div class = "max-w-[60%]">
-				<h1 class="font-black font-oswald text-9xl overflow-hidden relative z-10">{{cinfo["name"]}}</h1> 
+				<h1 class="font-black font-oswald text-9xl overflow-hidden relative z-10 ">{{cinfo["name"]}}</h1> 
 			<div class = "rain front-row " id="weather"></div>
 		</div>
 		<div class="flex">

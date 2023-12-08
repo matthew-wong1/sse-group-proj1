@@ -3,16 +3,22 @@
 {% block body %}
 
 {% if show_alert %}
-<div class="fixed top-250 left-0 right-0 z-50 p-4 mb-4 text-sm text-red-800 bg-red-50 rounded-b-lg dark:bg-gray-800 dark:text-red-400" role="alert">
-    <span class="font-medium">Error!</span> No results found for: {{ query }}
+<div id="alert-popup" class="absolute top-20 left-1/2 transform -translate-x-1/2 flex items-center p-4 mb-4 rounded-lg text-red-800 border-t-4 shadow-gray-400 shadow-md border-red-300 bg-red-50 opacity-100 transition-opacity duration-500" role="alert" style="display: flex">
+    <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+    </svg>
+    <div class="ms-3 text-sm font-medium">
+        No results found for: {{ query }}
+    </div>
 </div>
-{% endif %}
+
+{% endif %} 
 
 <!-- Background picture and form -->
-<div class="bg-cover bg-center h-screen" style="background-image: url('../static/images/homepage.jpg');">
+<div class="bg-cover backdrop absolute top-0 w-full h-full " style="background-image: url('../static/images/homepage.jpg');">
 
 <!-- Spacer -->
-<div class="h-24"></div>
+<div class="h-24"></div> 
 <div class="h-60"></div>
 
 <!-- Big title -->
@@ -35,5 +41,9 @@
         </div>
     </form>
 </div>
+<script>
+    const show_alert = '{{show_alert}}'
+</script>
+<script src="{{ url_for('static', filename='/javascript/index.js') }}"></script>
 
 {% endblock %}
