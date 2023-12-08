@@ -1,13 +1,14 @@
 import json
 import os
+import requests
 
 from dotenv import load_dotenv
 from flask import (Flask, jsonify, redirect, render_template, request, session,
                    url_for)
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
-                         logout_user)
+                         logout_user, current_user)
 from requests.exceptions import HTTPError, RequestException
-
+from oauthlib.oauth2 import WebApplicationClient
 import helpers.connection as db
 import helpers.favourites as fav
 import helpers.places as plc
@@ -26,6 +27,15 @@ login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+# Configure Google OAuth
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_DISCOVERY_URL = ("https://accounts.google.com/.well-known/openid-configuration")
+
+
+# Set up OAuth 2 client
+client = WebApplicationClient(GOOGLE_CLIENT_ID)
+
 
 class User(UserMixin):
     def __init__(self, id, username):
@@ -37,6 +47,10 @@ class User(UserMixin):
 def load_user(user_id):
     return User(id=user_id, username=get_username)
 
+# Retrieve Google's provider config
+# ADD ERROR HADNLING TO API CALL LATER
+def get_google_provider_config():
+    return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 # Configure routing
 @app.route("/", methods=["GET"])
@@ -108,7 +122,8 @@ def login():
             errors['login'] = 'Incorrect username or password'
             return render_template("login.html",
                                    username=username,
-                                   errors=errors)
+                                   errors=errors,
+                                   GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
 
         user = User(id=get_user_id(username), username=username)
         login_user(user)
@@ -116,7 +131,7 @@ def login():
         return redirect("/")
 
     else:
-        return render_template("login.html")
+        return render_template("login.html", GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
 
 
 @app.route("/logout")
