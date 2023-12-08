@@ -1,4 +1,3 @@
-import json
 import os
 from json.decoder import JSONDecodeError
 
@@ -165,9 +164,6 @@ def search_nearby_restaurants(
     # Check if the request was successful
     if response.status_code == 200:
         nearby_data = response.json()
-        # Save the data to a file
-        with open("nearby_restaurants.json", "w") as file:
-            json.dump(nearby_data, file, indent=4)
         return nearby_data
     else:
         # Handle potential errors
@@ -266,12 +262,6 @@ def fetch_additional_details(
                 details["location"] = location
                 # default is_saved false
                 details["is_saved"] = False
-
-                # Save the data to a file
-                with open(
-                    f'details_{name.replace(" ", "_")}.json', "w"
-                ) as file:
-                    json.dump(place_details_data, file, indent=4)
 
         counter += 1
     return top_restaurants_dict
