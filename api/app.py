@@ -448,12 +448,12 @@ def get_places():
     if ((len(places) == 0) | (cname["country_name"] == '')):
         return redirect(url_for('index', status="no_results", query=location))
     cinfo_all = {**plc.get_cinfo(cname["country_name"]),
-                **plc.get_weather(places[0]["longlat"], date),
-                "name": plc.fuzzy_match(location, cname)}
+                 **plc.get_weather(places[0]["longlat"], date),
+                 "name": plc.fuzzy_match(location, cname)}
     return render_template("places.html",
-                        places=places,
-                        cinfo=cinfo_all)
-    
+                           places=places,
+                           cinfo=cinfo_all)
+
 
 @app.route("/places/details", methods=["GET"])
 def get_place_details():
