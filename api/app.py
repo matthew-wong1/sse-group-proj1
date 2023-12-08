@@ -417,14 +417,14 @@ def delete_restaurant():
 @login_required
 def favourites():
     try:
-        favr = fav.get_favourites()
+        favr = fav.get_favourites(session["_user_id"])
         fav_json = {'data': favr}
         return render_template("favourites.html",
-                fav_json=json.dumps(fav_json), fav=favr) 
-    #renders empty if extraction from database fails
-    except Exception as e:
+                               fav_json=json.dumps(fav_json), fav=favr)
+    # renders empty if extraction from database fails
+    except Exception:
         return render_template("favourites.html",
-                fav_json={}, fav={}) #modified
+                               fav_json={}, fav={})  # modified
 
 
 @app.route("/favourites/opt", methods=["POST"])
@@ -434,7 +434,7 @@ def favourites_optimize():
 
 @app.route("/favourites/save", methods=["POST"])
 def favourites_save():
-    return fav.save_favourites_order(request.get_json())
+    return fav.save_favourites_order(session["_user_id"], request.get_json())
 
 
 @app.route("/places", methods=["GET"])
@@ -442,13 +442,12 @@ def get_places():
     location = request.args.get('location')
     date = request.args.get('date')
     places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
-    if len(places) == 0:
-        return redirect(url_for('index', status="no_results", query=location))
-
     cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
+    if ((len(places) == 0) | (cname["country_name"] == '')):
+        return redirect(url_for('index', status="no_results", query=location))
     cinfo_all = {**plc.get_cinfo(cname["country_name"]),
-                **plc.get_weather(places[0]["longlat"], date),
-                "name": plc.fuzzy_match(location, cname)}
+                 **plc.get_weather(places[0]["longlat"], date),
+                 "name": plc.fuzzy_match(location, cname)}
     return render_template("places.html",
                            places=places,
                            cinfo=cinfo_all)

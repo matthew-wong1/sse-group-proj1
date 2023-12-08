@@ -451,3 +451,6 @@ html { overflow-y: scroll; }
   z-index:10;
 }
 
+.backdrop {
+  z-index: -1; /* Negative z-index to position behind other elements */
+}

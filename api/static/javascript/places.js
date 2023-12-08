@@ -82,7 +82,7 @@ elementsWithDataName.forEach(element => {
 
                     // Add the elements for the smaller images
                     const smallerImagesColumn = document.createElement('div');
-                    smallerImagesColumn.className = ' flex flex-col justify-between h-[40rem]';        
+                    smallerImagesColumn.className = 'flex flex-col justify-between h-[40rem]';        
 
                     // Three smaller images (starting from index 1)
                     for (let i = 1; i < 4; i++) {
