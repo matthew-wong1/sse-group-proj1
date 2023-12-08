@@ -441,17 +441,19 @@ def favourites_save():
 def get_places():
     location = request.args.get('location')
     date = request.args.get('date')
+    if ((location is None) | (date is None)):
+        return redirect(url_for('index', status="no_results", query=location))
     places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
     cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
     if ((len(places) == 0) | (cname["country_name"] == '')):
         return redirect(url_for('index', status="no_results", query=location))
     cinfo_all = {**plc.get_cinfo(cname["country_name"]),
-                 **plc.get_weather(places[0]["longlat"], date),
-                 "name": plc.fuzzy_match(location, cname)}
+                **plc.get_weather(places[0]["longlat"], date),
+                "name": plc.fuzzy_match(location, cname)}
     return render_template("places.html",
-                           places=places,
-                           cinfo=cinfo_all)
-
+                        places=places,
+                        cinfo=cinfo_all)
+    
 
 @app.route("/places/details", methods=["GET"])
 def get_place_details():

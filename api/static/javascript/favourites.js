@@ -130,6 +130,25 @@ function swapPlaces(tripid, fromIndex, toIndex) {
   listPlaces[tripid][toIndex].appendChild(placeOne);
 }
 
+const popup = document.getElementById('alert-popup');
+function hidePopup() {
+  popup.classList.remove('opacity-100');
+  popup.classList.add('opacity-0');
+  setTimeout(() => {
+    popup.style.display = 'none';
+    popup.classList.remove('opacity-0'); // Reset opacity class
+    popup.classList.add('opacity-100'); // Reset opacity class
+}, 500);
+}
+
+function showPopup() {
+  popup.style.display = 'flex';
+  setTimeout(hidePopup, 5000);
+}
+
+const red = "fixed top-20 z-50 left-1/2 transform -translate-x-1/2 flex items-center p-4 mb-4 rounded-lg text-red-800 border-t-4 shadow-2xl border-red-300 bg-red-50 opacity-100 transition-opacity duration-500";
+const green = "fixed top-20 z-50 left-1/2 transform -translate-x-1/2 flex items-center p-4 mb-4 rounded-lg text-green-800 border-t-4 shadow-2xl border-green-300 bg-green-50 opacity-100 transition-opacity duration-500"
+
 // function to trigger the call to the Route API
 // which would return the optimized waypoints.
 // this function further updates the frontend 
@@ -145,14 +164,17 @@ function optimize(tripid) {
     body: JSON.stringify(listSortOrder[tripid]) // Convert the data object to JSON
   };
 
-  if (listSortOrder[tripid].length <= 2) {
-    alert("Unable to optimize as more than 2 locations need to be provided")
-
-  } else if (listSortOrder[tripid].length > 2) {
+  if (listSortOrder[tripid].length <= 3) {
+    popup.className = red
+    document.getElementById('alert-text').innerHTML = "Unable to optimize as more than 3 locations need to be provided"
+    showPopup()
+  } else if (listSortOrder[tripid].length >= 4) {
     fetch('/favourites/opt',options)
             .then(response => {
                 if (!response.ok) {
-                  alert("There was an error optimizing the path. Please try again later.");
+                  popup.className = red
+                  document.getElementById('alert-text').innerHTML = "There was an error optimizing the path. Please try again later."
+                  showPopup()
                 }
                 return response.json();
             })
@@ -165,18 +187,21 @@ function optimize(tripid) {
                 data = data.map(x=> x+2);
                 data.unshift(1);
                 data.push(data.length+1);
-                console.log(data);
                 for (let i=0; i<data.length; i++) {
                     if (data[i] !== i+1) {
                         swapPlaces(tripid,data[i]-1,i);
                         data[data[i]-1] = data[i];
                     }
                 }
-                alert("Route Optimized!")
+                popup.className = green
+                document.getElementById('alert-text').innerHTML = "Route Optimized!"
+                showPopup()
             })
             .catch(error => {
                 // Handle errors from the fetch or the response
-                alert("There was an error optimizing the path. Please try again later.");
+                popup.className = red
+                document.getElementById('alert-text').innerHTML = "There was an error optimizing the path. Please try again later."
+                showPopup()
             });
   }
 
@@ -195,18 +220,23 @@ function save(tripid) {
   fetch('/favourites/save',options) 
           .then(response => {
               if (!response.ok) {
-                  throw new Error('Network response was not ok.');
+                popup.className = red
+                document.getElementById('alert-text').innerHTML = "There was an error saving the route. Please try again later"
+                showPopup()
               }
               return response.json();
           }) 
           .then(data => { 
               // Handle the data received from the GET request
-              console.log('Data received:', data);
-              alert("Route saved!")
+              popup.className = green
+              document.getElementById('alert-text').innerHTML = "Route Saved!"
+              showPopup()
           })
           .catch(error => {
               // Handle errors from the fetch or the response
-              alert("There was an error saving the route. Please try again later");
+              popup.className = red
+              document.getElementById('alert-text').innerHTML = "There was an error saving the route. Please try again later"
+              showPopup()
           });
 
 }
@@ -227,3 +257,6 @@ function addEventListeners() {
     item.addEventListener('dragleave', dragLeave);
   });
 }
+
+
+    
