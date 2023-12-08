@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
 
+{% block header %}
+    {% include "oauth_meta.html" %}
+{% endblock %}
+
 {% block body %}
 
 <div class="p-form">
@@ -42,6 +46,8 @@
             Already have an account?
             </a>
         </div>
+
+        {% include "oauth_buttons.html" %}
     </form>
 </div>
 
