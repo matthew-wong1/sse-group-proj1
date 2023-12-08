@@ -64,6 +64,7 @@ def index():
     status = request.args.get('status')
     query = request.args.get('query')
     show_alert = (status == "no_results")
+    print(current_user.is_authenticated)
 
     return render_template("index.html", show_alert=show_alert, query=query)
 
@@ -171,10 +172,6 @@ def callback():
 
     # Log in the user
     login_user(user)
-
-    print(current_user.id)
-    print(current_user.username)
-    print(session)
 
     return redirect("/")
 
