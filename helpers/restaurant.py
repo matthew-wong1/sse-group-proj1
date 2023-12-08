@@ -4,6 +4,7 @@ import folium
 import requests
 from flask import request, session
 from requests.utils import quote
+from flask_login import current_user
 
 from helpers.connection import connect_to_db
 
@@ -270,7 +271,7 @@ def is_restaurant_saved(restaurants):
         cursor.execute("""
                        SELECT placeid FROM placesadded
                        WHERE userid = %s AND date = %s
-                       """, (session["_user_id"], restaurants["date"]))
+                       """, (current_user.id, restaurants["date"]))
         # get a tuple of all the placeids from places table
         saved_restaurants_records = cursor.fetchall()
         conn.commit()

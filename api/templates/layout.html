@@ -29,7 +29,7 @@
           <img src="./static/images/logo.png" class="h-10" alt="Flowbite Logo">
             <span class="self-center text-2xl font-semibold whitespace-nowrap">VOYAGE</span>
       </a>
-        {% if '_user_id' in session %}
+        {% if current_user.is_authenticated %}
         <!-- User menu -->
         <div class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
           <button type="button" class="flex text-sm border-2 border-gray-500 rounded-full md:me-0" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
@@ -39,7 +39,7 @@
      
           <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600" id="user-dropdown">
             <div class="px-4 py-3">
-              <span class="block text-sm  text-gray-500 truncate dark:text-gray-400">{{ session['username'] }}</span>
+              <span class="block text-sm  text-gray-500 truncate dark:text-gray-400">{{ current_user.username }}</span>
             </div>
             <ul class="py-2" aria-labelledby="user-menu-button">
               <li>

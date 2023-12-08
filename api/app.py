@@ -64,14 +64,13 @@ def index():
     status = request.args.get('status')
     query = request.args.get('query')
     show_alert = (status == "no_results")
-    print(current_user.is_authenticated)
 
     return render_template("index.html", show_alert=show_alert, query=query)
 
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    if '_user_id' in session:
+    if current_user.is_authenticated:
         return redirect("/")
 
     if request.method == "POST":
@@ -101,13 +100,13 @@ def settings():
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
-        if (not match_password(session['username'], password_old)):
+        if (not match_password(current_user.username, password_old)):
             errors['password_old'] = "Incorrect password"
 
         check_password(password, repeat_password, errors)
 
         if success:
-            update_user(session['_user_id'], password)
+            update_user(current_user.id, password)
 
         # if errors empty, render success text?
         return render_template("settings.html", errors=errors)
@@ -177,7 +176,7 @@ def callback():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if '_user_id' in session:
+    if current_user.is_authenticated:
         return redirect("/")
 
     errors = {}
@@ -323,7 +322,7 @@ def show_restaurants():
 
 @app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
-    if '_user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for("login"))
     conn = None
     cursor = None
@@ -396,7 +395,7 @@ def save_restaurant():
             )
 
         # TEMP userid BEING USED!
-        userid = session["_user_id"]
+        userid = current_user.id
 
         # userid = "tp4646"\
         # Insert into placesadded table
@@ -434,7 +433,7 @@ def save_restaurant():
 def delete_restaurant():
     conn = None
     cursor = None
-    if '_user_id' not in session:
+    if not current_user.is_authenticated:
         # User is not logged in, redirect to login page
         return redirect(url_for("login"))
     if request.args:
@@ -447,7 +446,7 @@ def delete_restaurant():
     else:
         data = request.json
     # Retrieve user_id from session
-    userid = session["_user_id"]
+    userid = current_user.id
     # userid = "tp4646"
 
     try:
@@ -500,7 +499,7 @@ def delete_restaurant():
 @login_required
 def favourites():
     try:
-        favr = fav.get_favourites(session["_user_id"])
+        favr = fav.get_favourites(current_user.id)
         fav_json = {'data': favr}
         return render_template("favourites.html",
                                fav_json=json.dumps(fav_json), fav=favr)
@@ -517,7 +516,7 @@ def favourites_optimize():
 
 @app.route("/favourites/save", methods=["POST"])
 def favourites_save():
-    return fav.save_favourites_order(session["_user_id"], request.get_json())
+    return fav.save_favourites_order(current_user.id, request.get_json())
 
 
 @app.route("/places", methods=["GET"])
