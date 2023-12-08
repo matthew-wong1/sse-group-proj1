@@ -205,7 +205,7 @@ function toggleRestaurant(place_id) {
         // Confirm with the user if they want to log in
         if (confirm('You need to be logged in to save to favourites. Would you like to log in now?')) {
             // If they confirm, redirect them to the login page
-            window.location.href = '/login'; // Use the correct route for your login page
+            window.location.href = '/login'; 
         }                           
     });
 }
@@ -223,6 +223,7 @@ function submitRequest() {
     var currentPrice = currentParams.get('price') || '2'; // Default price level
     var currentKeyword = currentParams.get('keyword') || 'restaurant'; // Default keyword
     var currentPlace_id = currentParams.get('place_id') || 'ChIJz-VvsdMEdkgR1lQfyxijRMw';
+    var currentDate = currentParams.get('date') || '2023-12-12';
 
     // Getting new values from user selection
     var distanceInKm = document.getElementById('distance').value;
@@ -237,6 +238,7 @@ function submitRequest() {
     currentParams.set('keyword', selectedType);
     currentParams.set('name', currentName); // Include the name in the query string for title
     currentParams.set('place_id', currentPlace_id); 
+    currentParams.set('date', currentDate); 
 
     // Refreshing the page with updated parameters
     window.location.href = '/restaurants?' + currentParams.toString();

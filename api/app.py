@@ -2,8 +2,7 @@ import json
 import os
 
 from dotenv import load_dotenv
-from flask import (Flask, jsonify, redirect, render_template, request, session,
-                   url_for)
+from flask import Flask, redirect, render_template, request, session, url_for
 from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
 from requests.exceptions import HTTPError, RequestException
@@ -128,112 +127,31 @@ def logout():
 @app.route("/restaurants", methods=["GET", "POST"])
 def show_restaurants():
     try:
-        api_key = os.environ.get("GCLOUD_KEY")
-        if not api_key:
-            app.logger.error("API key is empty")
-            return jsonify({"error": "API key is empty"}), 400
-
-        # Default data
-        default_data = {
-            "place_id": "ChIJz-VvsdMEdkgR1lQfyxijRMw",
-            "name": "Default: China Town",
-            "location": "London",
-            "date": "2023-01-01",
-        }
-        # Note default data wont be required in real
-        if request.method == "POST":
-            routes_data = request.get_json() or {}
-            place_id = routes_data.get("place_id", default_data["place_id"])
-            name = routes_data.get("name", default_data["name"])
-            # location of the search e.g. London
-            location = routes_data.get("location", default_data["location"])
-            date = routes_data.get("date", default_data["date"])
-        else:
-            # For a GET request, use query parameters
-            # Get request shouldnt happen?
-            place_id = request.args.get("place_id", default_data["place_id"])
-            name = request.args.get("name", default_data["name"])
-            location = request.args.get("location", default_data["location"])
-            date = request.args.get("date", default_data["date"])
-
-        keyword_string, price, dist, open_q = hres.parse_request_parameters()
-
-        # details return to the Jinja
-        search_details = {
-            "name": name,
-            "keyword": keyword_string,
-            "price": price,
-            "dist": dist,
-            "open": open_q,
-        }
-
-        lat, lng = hres.fetch_place_details(api_key, place_id)
-        if not lat or not lng:
-            return "Failed to retrieve place details", 500
-
-        # Search nearby restaurants
-        nearby_data = hres.search_nearby_restaurants(
-            api_key, lat, lng, keyword_string, dist, price, open_q
+        api_key = hres.get_api_key_or_error()
+        request_data = hres.get_request_data()
+        search_details = hres.get_search_details(request_data)
+        lat, lng = hres.get_lat_lng_or_error(api_key, request_data['place_id'])
+        nearby_data = hres.get_nearby_data_or_error(api_key,
+                                                    lat, lng, search_details)
+        top_restaurants_dict = hres.process_and_sort_restaurants(
+            nearby_data)
+        top_restaurants_dict = hres.fetch_and_update_restaurant_details(
+            api_key, top_restaurants_dict, request_data)
+        restaurant_data = hres.prepare_restaurant_data_for_map(
+            top_restaurants_dict)
+        map_html = hres.generate_map_html(
+            restaurant_data, lat, lng, search_details['dist'])
+        return render_template(
+            "restaurants.html",
+            restaurants=top_restaurants_dict,
+            map_html=map_html,
+            search_details=search_details,
+            to_do_coords=[lng, lat],
+            lat_long=restaurant_data,
+            mapbox_key=os.environ.get("MAPBOX_KEY")
         )
-        if "status" not in nearby_data or nearby_data["status"] != "OK":
-            return "Failed to retrieve data", 500
-
-        # Process and sort restaurants
-        all_restaurants = hres.process_restaurant_data(nearby_data)
-        top_restaurants_dict = hres.sort_and_slice_restaurants(
-            all_restaurants
-        )
-
-        # Fetch additional details
-        # date and location of original search added to all for database
-        top_restaurants_dict = hres.fetch_additional_details(
-            api_key, top_restaurants_dict, date, location
-        )
-
-        # this will update the bool value for if heart should be red or not.
-        top_restaurants_dict = hres.is_restaurant_saved(top_restaurants_dict)
-
-    except HTTPError as e:
-        # This will catch HTTP errors, which occur when HTTP request
-        # returned an unsuccessful status code
-        app.logger.exception("HTTP Error occurred")
-        return jsonify({"error": str(e)}), 500
-    except json.JSONDecodeError:
-        app.logger.exception("JSON Decode Error")
-        return jsonify({"error": "No restaurants found in the radius :("}), 500
-    except RequestException:
-        # This will catch any other exception thrown by
-        # the requests library (such as a connection error)
-        app.logger.exception("Network-related error occurred")
-        return jsonify({"error": "Please check your internet connection"}), 500
-    except Exception as e:
-        app.logger.exception("An unexpected error occurred")
-        return jsonify({"error": str(e)}), 500
-
-    # Prepare data for map generation
-    restaurant_data = [
-        {
-            "name": details["name"],
-            "lat": details["latitude"],
-            "lng": details["longitude"],
-            "website_url": details["website"],
-            "image_url": details["photo_url"],
-            "ratings": details["rating"],
-        }
-        for name, details in top_restaurants_dict.items()
-    ]
-
-    # Generate map HTML using to_do lat and logn
-    map_html = hres.generate_map(restaurant_data, lat, lng, dist)
-    return render_template(
-        "restaurants.html",
-        restaurants=top_restaurants_dict,
-        map_html=map_html,
-        search_details=search_details,
-        to_do_coords=[lng, lat],
-        lat_long=restaurant_data,
-        mapbox_key=os.environ.get("MAPBOX_KEY")
-    )
+    except (HTTPError, RequestException, Exception) as e:
+        return hres.handle_error(e)
 
 
 @app.route("/save-restaurant", methods=["POST"])
