@@ -2,7 +2,7 @@ import os
 
 import folium
 import requests
-from flask import request, session
+from flask import request
 from flask_login import current_user
 from requests.utils import quote
 

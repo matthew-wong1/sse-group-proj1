@@ -4,8 +4,6 @@ import secrets
 
 import requests
 
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
 from dotenv import load_dotenv
 from flask import (Flask, jsonify, redirect, render_template, request, session,
                    url_for)
@@ -33,9 +31,11 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 # Configure Google OAuth
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' - FOR LOCAL TESTING
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-GOOGLE_DISCOVERY_URL = ("https://accounts.google.com/.well-known/openid-configuration")
+GOOGLE_DISCOVERY_URL = (
+    "https://accounts.google.com/.well-known/openid-configuration")
 
 
 # Set up OAuth 2 client
@@ -52,10 +52,12 @@ class User(UserMixin):
 def load_user(user_id):
     return User(id=user_id, username=get_username(user_id))
 
+
 # Retrieve Google's provider config
 # ADD ERROR HADNLING TO API CALL LATER
 def get_google_provider_config():
     return requests.get(GOOGLE_DISCOVERY_URL).json()
+
 
 # Configure routing
 @app.route("/", methods=["GET"])
@@ -65,7 +67,7 @@ def index():
     show_alert = (status == "no_results")
     if current_user.is_authenticated:
         print(current_user.id)
-        print(current_user.username)    
+        print(current_user.username)
 
     return render_template("index.html", show_alert=show_alert, query=query)
 
@@ -114,14 +116,18 @@ def settings():
         return render_template("settings.html", errors=errors)
     return render_template("settings.html")
 
+
 @app.route("/OAuth", methods=["GET", "POST"])
 def OAuth():
     # Get endpoint for Google login
     google_provider_config = get_google_provider_config()
     auth_endpoint = google_provider_config["authorization_endpoint"]
 
-    # Construct request for Google login 
-    request_uri = client.prepare_request_uri(auth_endpoint, redirect_uri = request.base_url + "/callback", scope=["openid", "email"])
+    # Construct request for Google login
+    request_uri = client.prepare_request_uri(
+        auth_endpoint,
+        redirect_uri=request.base_url+"/callback",
+        scope=["openid", "email"])
     return redirect(request_uri)
 
 
@@ -133,7 +139,7 @@ def callback():
     google_provider_config = get_google_provider_config()
     token_endpoint = google_provider_config["token_endpoint"]
 
-    # Prepare request for tokens 
+    # Prepare request for tokens
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
@@ -141,7 +147,7 @@ def callback():
         code=auth_code
     )
 
-    # Send request for tokens 
+    # Send request for tokens
     token_response = requests.post(
         token_url,
         headers=headers,
@@ -152,14 +158,14 @@ def callback():
     # Parse tokens
     client.parse_request_body_response(json.dumps(token_response.json()))
 
-    # Get User information 
+    # Get User information
     userinfo_endpoint = google_provider_config["userinfo_endpoint"]
     uri, headers, body = client.add_token(userinfo_endpoint)
     userinfo_response = requests.get(uri, headers=headers, data=body)
 
-    # Parse response from userinfo 
+    # Parse response from userinfo
     email = userinfo_response.json()["email"]
-    # Throw error if email not avialable 
+    # Throw error if email not avialable
 
     # Check if user already exists
     if not user_exists(email):
@@ -175,6 +181,7 @@ def callback():
     login_user(user)
 
     return redirect("/")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import requests
-from flask import session
 from flask_login import current_user
 from fuzzywuzzy import process
 
@@ -12,7 +11,7 @@ import helpers.connection as db
 # function to get the list of info e.g images, names, latitude
 # for the searched location
 def get_places(search, date, api_key):
-    
+
     url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
     params = {
         'query': 'Places Of Interest in ' + search,
