@@ -1,11 +1,13 @@
 import os
 
 import pytest
+from dotenv import load_dotenv
 
 from helpers.favourites import (get_favourites, get_route, retrieve_favourites,
                                 save_favourites_order)
 
-api_key = os.environ.get("GCLOUD_KEY")
+load_dotenv()
+api_key = os.getenv("GCLOUD_KEY", "")
 place_id = "ChIJz-VvsdMEdkgR1lQfyxijRMw"  # default place id
 
 
@@ -45,7 +47,7 @@ mock_route_input = [{'tripid': 'london (2023-12-12)',
                      'placeID': 'ChIJSdtli0MDdkgRLW9aCBpCeJ4'}]
 
 
-@pytest.mark.parametrize("test_input,expected",
-                         [(mock_route_input, [0, 1, 2])])
-def test_get_route(test_input, expected):
+@pytest.mark.parametrize("test_input,api_key,expected",
+                         [(mock_route_input, api_key, [0, 1, 2])])
+def test_get_route(test_input, api_key, expected):
     assert get_route(test_input, api_key) == expected
