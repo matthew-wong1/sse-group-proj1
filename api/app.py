@@ -3,10 +3,8 @@ import os
 import secrets
 
 import requests
-
 from dotenv import load_dotenv
-from flask import (Flask, jsonify, redirect, render_template, request, session,
-                   url_for)
+from flask import Flask, redirect, render_template, request, session, url_for
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
                          login_user, logout_user)
 from oauthlib.oauth2 import WebApplicationClient
