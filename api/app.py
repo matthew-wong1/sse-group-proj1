@@ -1,6 +1,8 @@
 import json
 import os
 import requests
+import secrets
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 from dotenv import load_dotenv
 from flask import (Flask, jsonify, redirect, render_template, request, session,
@@ -18,6 +20,10 @@ from helpers.auth import (add_user, check_password, check_username,
                           update_user, user_exists)
 
 app = Flask(__name__)
+@app.after_request
+def set_headers(response):
+    response.headers["Referrer-Policy"] = 'no-referrer'
+    return response
 
 load_dotenv()
 app.config['SECRET_KEY'] = os.environ.get("SECRETKEY")
@@ -106,6 +112,71 @@ def settings():
         return render_template("settings.html", errors=errors)
     return render_template("settings.html")
 
+@app.route("/OAuth", methods=["GET", "POST"])
+def OAuth():
+    # Get endpoint for Google login
+    google_provider_config = get_google_provider_config()
+    auth_endpoint = google_provider_config["authorization_endpoint"]
+
+    # Construct request for Google login 
+    request_uri = client.prepare_request_uri(auth_endpoint, redirect_uri = request.base_url + "/callback", scope=["openid", "email"])
+    return redirect(request_uri)
+
+
+@app.route("/OAuth/callback", methods=["GET", "POST"])
+def callback():
+    # Get Google's Auth code
+    auth_code = request.args.get("code")
+
+    google_provider_config = get_google_provider_config()
+    token_endpoint = google_provider_config["token_endpoint"]
+
+    # Prepare request for tokens 
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=request.base_url,
+        code=auth_code
+    )
+
+    # Send request for tokens 
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
+    )
+
+    # Parse tokens
+    client.parse_request_body_response(json.dumps(token_response.json()))
+
+    # Get User information 
+    userinfo_endpoint = google_provider_config["userinfo_endpoint"]
+    uri, headers, body = client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+
+    # Parse response from userinfo 
+    email = userinfo_response.json()["email"]
+    # Throw error if email not avialable 
+
+    # Check if user already exists
+    if not user_exists(email):
+        RAND_PASSWORD_LENGTH = 32
+        rand_password = secrets.token_urlsafe(RAND_PASSWORD_LENGTH)
+        add_user(email, rand_password)
+
+    # Create a user object
+    user = User(id=get_user_id(email), username=email)
+    login_user(user)
+
+    # Log in the user
+    login_user(user)
+
+    print(current_user.id)
+    print(current_user.username)
+    print(session)
+
+    return redirect("/")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
