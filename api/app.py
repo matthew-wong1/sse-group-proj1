@@ -1,16 +1,19 @@
 import json
 import os
-import requests
 import secrets
+
+import requests
+
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 from dotenv import load_dotenv
 from flask import (Flask, jsonify, redirect, render_template, request, session,
                    url_for)
-from flask_login import (LoginManager, UserMixin, login_required, login_user,
-                         logout_user, current_user)
-from requests.exceptions import HTTPError, RequestException
+from flask_login import (LoginManager, UserMixin, current_user, login_required,
+                         login_user, logout_user)
 from oauthlib.oauth2 import WebApplicationClient
+from requests.exceptions import HTTPError, RequestException
+
 import helpers.connection as db
 import helpers.favourites as fav
 import helpers.places as plc
@@ -20,10 +23,6 @@ from helpers.auth import (add_user, check_password, check_username,
                           update_user, user_exists)
 
 app = Flask(__name__)
-@app.after_request
-def set_headers(response):
-    response.headers["Referrer-Policy"] = 'no-referrer'
-    return response
 
 load_dotenv()
 app.config['SECRET_KEY'] = os.environ.get("SECRETKEY")
@@ -51,7 +50,7 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User(id=user_id, username=get_username)
+    return User(id=user_id, username=get_username(user_id))
 
 # Retrieve Google's provider config
 # ADD ERROR HADNLING TO API CALL LATER
@@ -64,6 +63,9 @@ def index():
     status = request.args.get('status')
     query = request.args.get('query')
     show_alert = (status == "no_results")
+    if current_user.is_authenticated:
+        print(current_user.id)
+        print(current_user.username)    
 
     return render_template("index.html", show_alert=show_alert, query=query)
 
@@ -194,7 +196,6 @@ def login():
 
         user = User(id=get_user_id(username), username=username)
         login_user(user)
-        session['username'] = username
         return redirect("/")
 
     else:

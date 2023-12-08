@@ -3,8 +3,8 @@ from urllib.parse import urlencode
 
 import requests
 from flask import session
-from fuzzywuzzy import process
 from flask_login import current_user
+from fuzzywuzzy import process
 
 import helpers.connection as db
 

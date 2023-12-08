@@ -3,8 +3,8 @@ import os
 import folium
 import requests
 from flask import request, session
-from requests.utils import quote
 from flask_login import current_user
+from requests.utils import quote
 
 from helpers.connection import connect_to_db
 
