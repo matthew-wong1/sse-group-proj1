@@ -45,7 +45,6 @@ def retrieve_favourites(user):
 # order (if any), to facilitate display
 # frontend
 def get_favourites(user):
-
     results = retrieve_favourites(user)
 
     keys = [

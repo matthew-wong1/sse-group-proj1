@@ -11,7 +11,6 @@ import helpers.connection as db
 # function to get the list of info e.g images, names, latitude
 # for the searched location
 def get_places(search, date, api_key):
-
     url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
     params = {
         'query': 'Places Of Interest in ' + search,

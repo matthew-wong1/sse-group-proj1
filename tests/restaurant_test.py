@@ -1,9 +1,22 @@
 import os
 import unittest.mock as mock
+from json.decoder import JSONDecodeError
 
-# parse_request_parameters,;
-# process_restaurant_data,; fetch_additional_details,
-from helpers.restaurant import (fetch_place_details, generate_map,
+import pytest
+from flask import Flask
+from requests.exceptions import HTTPError, RequestException
+
+from helpers.restaurant import (fetch_additional_details,
+                                fetch_and_update_restaurant_details,
+                                fetch_place_details, generate_map,
+                                generate_map_html, get_api_key_or_error,
+                                get_lat_lng_or_error, get_nearby_data_or_error,
+                                get_request_data, get_search_details,
+                                handle_error, is_restaurant_saved,
+                                parse_request_parameters,
+                                prepare_restaurant_data_for_map,
+                                process_and_sort_restaurants,
+                                process_restaurant_data,
                                 search_nearby_restaurants,
                                 sort_and_slice_restaurants)
 
@@ -66,28 +79,23 @@ def test_fetch_place_details():
         assert lng == -0.1335
 
 
-# def test_parse_request_parameters():
-#     from app import app
+def test_parse_request_parameters():
+    from flask import Flask
 
-#     with app.test_request_context(
-#         "/?place_id=test_place_id&address=Test+"
-#         "Address&keyword=testaurant&price=1&dist=500&open=true"
-#     ):
-#         (
-#             place_id,
-#             address,
-#             keyword_string,
-#             price,
-#             dist,
-#             open_q,
-#         ) = parse_request_parameters()
+    app = Flask(__name__)
 
-#         assert place_id == "test_place_id"
-#         assert address == "Test Address"
-#         assert keyword_string == "testaurant"
-#         assert price == "1"
-#         assert dist == 500
-#         assert open_q == "true"
+    # Create a test request context with relevant parameters
+    with app.test_request_context(
+        "/?keyword=testaurant&price=1&dist=500&open=true"
+    ):
+        # Call the function
+        keyword_string, price, dist, open_q = parse_request_parameters()
+
+        # Assertions
+        assert keyword_string == "testaurant"
+        assert price == "1"
+        assert dist == 500
+        assert open_q == "true"
 
 
 def test_search_nearby_restaurants():
@@ -117,16 +125,17 @@ def test_search_nearby_restaurants():
                     {
                         "height": 400,
                         "html_attributions": [
-                            ('<a href="https://maps.google.com/maps/'
-                             'contrib/104444627635874232424">A Google'
-                             ' User</a>')
+                            (
+                                '<a href="https://maps.google.com/maps/'
+                                'contrib/104444627635874232424">A Google'
+                                " User</a>"
+                            )
                         ],
                         "photo_reference": "CmRaAAAAEItaW...",
                         "width": 600,
                     }
                 ],
             },
-            # ... Add more items as needed
         ],
         "status": "OK",
     }
@@ -153,29 +162,51 @@ def test_search_nearby_restaurants():
         assert len(result["results"]) > 0
 
 
-# def test_process_restaurant_data():
-#     # Mock data
-#     nearby_data = {
-#         "results": [
-#             {
-#                 "name": "Test Restaurant",
-#                 "rating": 4.5,
-#                 "user_ratings_total": 100,
-#                 "geometry": {"location": {"lat": 51.5114, "lng": -0.1325}},
-#                 "photos": [{"photo_reference": "test_photo_ref"}],
-#                 "place_id": "test_place_id",
-#             }
-#         ]
-#     }
+def test_process_restaurant_data():
+    # Mock data
+    nearby_data = {
+        "results": [
+            {
+                "name": "Sample Restaurant",
+                "geometry": {"location": {"lat": 51.5114, "lng": -0.1325}},
+                "vicinity": "123 Sample Street, London",
+                "rating": 4.5,
+                "user_ratings_total": 200,
+                "types": [
+                    "restaurant",
+                    "food",
+                    "point_of_interest",
+                    "establishment",
+                ],
+                "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+                "price_level": 2,
+                "opening_hours": {"open_now": True},
+                "photos": [
+                    {
+                        "height": 400,
+                        "html_attributions": [
+                            '<a href="https://maps.google.com/maps'
+                            '/contrib/104444627635874232424">A Google User</a>'
+                        ],
+                        "photo_reference": "CmRaAAAAEItaW...",
+                        "width": 600,
+                    }
+                ],
+            }
+        ]
+    }
 
-#     # Call the function
-#     all_restaurants = process_restaurant_data(nearby_data)
+    # Call the function
+    all_restaurants = process_restaurant_data(nearby_data)
 
-#     # Assertions
-#     assert len(all_restaurants) == 1
-#     assert "Test Restaurant" in all_restaurants
-#     assert all_restaurants["Test Restaurant"][0] == 4.5  # Rating
-#     assert all_restaurants["Test Restaurant"][1] == 100  # Rating count
+    # Assertions
+    assert len(all_restaurants) == 1
+    assert "Sample Restaurant" in all_restaurants
+    assert all_restaurants["Sample Restaurant"]["rating"] == 4.5  # Rating
+    assert (
+        all_restaurants["Sample Restaurant"]["rating_count"] == 200
+    )  # Rating count
+
 
 def test_sort_and_slice_restaurants():
     # Mock data with the correct format
@@ -215,29 +246,271 @@ def test_sort_and_slice_restaurants():
     assert len(sorted_restaurants) == 2
 
 
-# def test_fetch_additional_details():
-#     # Mock data
-#     top_restaurants_dict = {
-#         "Test Restaurant": (
-#             4.5,
-#             100,
-#             "search_link",
-#             51.5114,
-#             -0.1335,
-#             "photo_ref",
-#             "place_id",
-#         )
-#     }
-#     # TO DO!! - add example json
-#     # Mock the requests.get response within the test
+def test_fetch_additional_details():
+    # Mock data
+    top_restaurants_dict = {
+        "Test Restaurant": {
+            "rating": 4.5,
+            "user_ratings_total": 100,
+            "search_link": "search_link",
+            "lat": 51.5114,
+            "lng": -0.1335,
+            "photo_reference": "photo_ref",
+            "place_id": "place_id",
+        }
+    }
 
-#     # Call the function
-#     updated_restaurants = fetch_additional_details(
-#         api_key, top_restaurants_dict, max_requests=1
-#     )
+    # Sample response JSON
+    sample_response = {
+        "html_attributions": [],
+        "result": {
+            "editorial_summary": {
+                "language": "en",
+                "overview": "Anatolian food from "
+                "eastern Turkey in a modern restaurant with outside seating.",
+            },
+            "formatted_phone_number": "020 7637 4555",
+            "name": "TAS Restaurant Bloomsbury",
+            "website": ("https://tasrestaurants."
+                        "co.uk/tas-bloomsbury-restaurant/"
+                        ),
+        },
+        "status": "OK",
+    }
 
-#     # Assertions
-#     assert len(updated_restaurants) == 1
-#     assert "Test Restaurant" in updated_restaurants
-#     # Optionally, check for additional details that
-#     # should be added by the function
+    # Mock the requests.get response within the test
+    with mock.patch("requests.get") as mocked_get:
+        mocked_get.return_value.status_code = 200
+        mocked_get.return_value.json.return_value = sample_response
+
+        # Call the function
+        updated_restaurants = fetch_additional_details(
+            "fake_api_key",
+            top_restaurants_dict,
+            "2023-12-08",
+            "London",
+            max_requests=1,
+        )
+
+        # Checking the details added by the function
+        details = updated_restaurants["Test Restaurant"]
+        assert (
+            details["formatted_phone_number"]
+            == sample_response["result"]["formatted_phone_number"]
+        )
+        assert details["website"] == sample_response["result"]["website"]
+
+        # Adjusted assertion for editorial_summary
+        assert (
+            details["editorial_summary"]
+            == sample_response["result"]["editorial_summary"]["overview"]
+        )
+
+
+def test_get_api_key_or_error():
+    with mock.patch.dict(os.environ, {"GCLOUD_KEY": "test_key"}):
+        api_key = get_api_key_or_error()
+        assert api_key == "test_key"
+
+    with mock.patch.dict(os.environ, {"GCLOUD_KEY": ""}):
+        with pytest.raises(ValueError) as e:
+            get_api_key_or_error()
+        assert str(e.value) == "API key is empty"
+
+
+def test_handle_error():
+    from api.app import app
+
+    with app.app_context():
+        e = HTTPError()
+        response, status_code = handle_error(e)
+        assert status_code == 500
+        assert response.json == {"error": "HTTP error occurred"}
+
+        e = JSONDecodeError(msg="Error", doc="", pos=0)
+        response, status_code = handle_error(e)
+        assert status_code == 500
+        assert response.json == {"error": "No Restaurants found"}
+
+        e = RequestException()
+        response, status_code = handle_error(e)
+        assert status_code == 500
+        assert response.json == {"error": "Please check your connection"}
+
+        e = Exception("Generic error")
+        response, status_code = handle_error(e)
+        assert status_code == 500
+        assert response.json == {"error": "Generic error"}
+
+
+def test_get_request_data():
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/?place_id=test_place_id&location=London&date=2023-01-01"
+    ):
+        data = get_request_data()
+        assert data["place_id"] == "test_place_id"
+        assert data["location"] == "London"
+        assert data["date"] == "2023-01-01"
+
+
+def test_get_search_details():
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/?keyword=restaurant&price=2&dist=1000&open=true"
+    ):
+        data = {
+            "name": "Test Place",
+            "keyword": "restaurant",
+            "price": "2",
+            "dist": 1000,
+            "open": "true",
+        }
+        details = get_search_details(data)
+        assert details["name"] == "Test Place"
+        assert details["keyword"] == "restaurant"
+        assert details["price"] == "2"
+        assert details["dist"] == 1000
+        assert details["open"] == "true"
+
+
+def test_get_lat_lng_or_error():
+    with mock.patch("helpers.restaurant.fetch_place_details") as mock_fetch:
+        mock_fetch.return_value = (51.5114, -0.1325)
+        lat, lng = get_lat_lng_or_error("dummy_api_key", "test_place_id")
+        assert lat == 51.5114
+        assert lng == -0.1325
+
+
+def test_get_nearby_data_or_error():
+    with mock.patch(
+        "helpers.restaurant.search_nearby_restaurants"
+    ) as mock_search:
+        mock_search.return_value = {"status": "OK", "results": []}
+        data = get_nearby_data_or_error(
+            "dummy_api_key",
+            51.5114,
+            -0.1325,
+            {
+                "keyword": "restaurant",
+                "dist": 1000,
+                "price": "2",
+                "open": True,
+            },
+        )
+        assert "status" in data
+        assert data["status"] == "OK"
+
+
+def test_process_and_sort_restaurants():
+    mock_nearby_data = {
+        "results": [
+            {
+                "name": "Restaurant A",
+                "rating": 4.5,
+                "user_ratings_total": 200,
+                "geometry": {"location": {"lat": 51.5114, "lng": -0.1325}},
+                "photos": [{"photo_reference": "ref1"}],
+                "place_id": "place_id_A",
+            },
+            {
+                "name": "Restaurant B",
+                "rating": 4.0,
+                "user_ratings_total": 150,
+                "geometry": {"location": {"lat": 51.5115, "lng": -0.1326}},
+                "photos": [{"photo_reference": "ref2"}],
+                "place_id": "place_id_B",
+            },
+        ]
+    }
+    sorted_restaurants = process_and_sort_restaurants(mock_nearby_data)
+    assert (
+        len(sorted_restaurants) <= 15
+    )  # Ensure the list is sorted and sliced
+    assert (
+        "Restaurant A" in sorted_restaurants
+    )  # Check if a specific restaurant is in the result
+
+
+def test_fetch_and_update_restaurant_details():
+    mock_data = {
+        "Test Restaurant": {
+            "name": "Test Restaurant",
+            "rating": 4.5,
+            "user_ratings_total": 100,
+            "search_link": "https://example.com",
+            "latitude": 51.5114,
+            "longitude": -0.1335,
+            "photo_reference": "photo_ref",
+            "place_id": "test_place_id",
+        }
+    }
+    with mock.patch(
+        "helpers.restaurant.fetch_additional_details"
+    ) as mock_fetch:
+        mock_fetch.return_value = mock_data
+        updated_data = fetch_and_update_restaurant_details(
+            "dummy_api_key",
+            mock_data,
+            {"date": "2023-01-01", "location": "London"},
+        )
+        assert "Test Restaurant" in updated_data
+        assert updated_data["Test Restaurant"]["name"] == "Test Restaurant"
+
+
+def test_prepare_restaurant_data_for_map():
+    mock_data = {
+        "Test Restaurant": {
+            "name": "Test Restaurant",
+            "latitude": 51.5114,
+            "longitude": -0.1335,
+            "website": "https://example.com",
+            "photo_url": "https://example.com/photo.jpg",
+            "rating": 4.5,
+        }
+    }
+    restaurant_data = prepare_restaurant_data_for_map(mock_data)
+    assert len(restaurant_data) == 1
+    assert restaurant_data[0]["name"] == "Test Restaurant"
+    assert restaurant_data[0]["lat"] == 51.5114
+    assert restaurant_data[0]["lng"] == -0.1335
+
+
+def test_generate_map_html():
+    mock_restaurant_data = [
+        {
+            "name": "Test Restaurant",
+            "lat": 51.5114,
+            "lng": -0.1335,
+            "website_url": "https://example.com",
+            "image_url": "https://example.com/photo.jpg",
+            "ratings": 4.5,
+        }
+    ]
+    with mock.patch("helpers.restaurant.generate_map") as mock_generate:
+        mock_generate.return_value = "<div>Mock Map HTML</div>"
+        map_html = generate_map_html(
+            mock_restaurant_data, 51.5114, -0.1325, 1000
+        )
+        assert "<div>Mock Map HTML</div>" in map_html
+
+
+def test_is_restaurant_saved():
+    app = Flask(__name__)
+    with app.test_request_context(), mock.patch(
+        "helpers.restaurant.connect_to_db"
+    ) as mock_db, mock.patch(
+        "flask.session", new_callable=mock.MagicMock
+    ) as mock_session:
+        mock_data = {
+            "Test Restaurant": {
+                "place_id": "test_place_id",
+                "date": "2023-01-01",
+                "is_saved": "true",
+            }
+        }
+        mock_session.return_value = {"_user_id": "user123"}
+        mock_db.return_value = (mock.MagicMock(), mock.MagicMock())
+        mock_db.return_value[1].fetchall.return_value = [("test_place_id",)]
+        saved_data = is_restaurant_saved(mock_data)
+        assert saved_data["Test Restaurant"]["is_saved"]
