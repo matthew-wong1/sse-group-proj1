@@ -26,7 +26,7 @@ def retrieve_favourites(user):
                 ' (',CAST(a.date AS VARCHAR),')')
                 = c.id
         WHERE a.userid = %s
-        ORDER BY index;
+        ORDER BY a.date DESC, index;
         """
     cursor.execute(sql, user)
     sql_results = cursor.fetchall()
