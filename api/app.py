@@ -297,8 +297,7 @@ def save_places():
     data = plc.get_place_details(request_data["place_id"],
                                  request_data["date"],
                                  request_data["location"],
-                                 os.environ.get("GCLOUD_KEY"),
-                                 current_user.id)
+                                 os.environ.get("GCLOUD_KEY"))
     data['photo_reference'] = data['photo_reference'][0]
     result = hres.save_restaurant_data(user_id, data)
     return result
