@@ -248,7 +248,7 @@ def save_restaurant():
 
     # Get data from request and user_id from session
     data = request.json or request.args
-    user_id = session["_user_id"]
+    user_id = current_user.id
 
     # Call the helper function to handle restaurant data saving
     result = hres.save_restaurant_data(user_id, data)
@@ -263,7 +263,7 @@ def delete_restaurant():
 
     # Get data from request and user_id from session
     data = request.json
-    user_id = session["_user_id"]
+    user_id = current_user.id
 
     # Call the helper function to handle restaurant data deletion
     result = hres.delete_restaurant_data(user_id, data)
