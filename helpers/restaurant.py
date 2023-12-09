@@ -497,7 +497,8 @@ def delete_from_placesadded(cursor, user_id, data):
         (user_id, data["location"],
          data["date"], data["place_id"]),
     )
-
+    print((user_id, data["location"],
+         data["date"], data["place_id"]))
 
 def delete_from_places_if_needed(cursor, place_id):
     # Check if no users have place_id in placesadded table

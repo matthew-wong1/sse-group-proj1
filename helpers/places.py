@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import requests
-from flask_login import current_user
 from fuzzywuzzy import process
 
 import helpers.connection as db
@@ -10,7 +9,7 @@ import helpers.connection as db
 
 # function to get the list of info e.g images, names, latitude
 # for the searched location
-def get_places(search, date, api_key):
+def get_places(search, date, api_key, user):
     url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
     params = {
         'query': 'Places Of Interest in ' + search,
@@ -62,7 +61,8 @@ def get_places(search, date, api_key):
         encoded_params = urlencode(photo_params)
         base_url = 'https://maps.googleapis.com/maps/api/place/photo'
         response_list[i]["photo"] = f"{base_url}?{encoded_params}"
-    return is_location_saved(response_list)
+    
+    return is_location_saved(response_list, user)
 
 
 # function to get the country and city name
@@ -224,7 +224,7 @@ def fuzzy_match(search, cname):
 
 
 # get the place details
-def get_place_details(place_id, date, search, api_key):
+def get_place_details(place_id, date, search, api_key, user):
 
     place_det_url = 'https://maps.googleapis.com/maps/api/place/details/json'
     place_det_params = {
@@ -297,14 +297,12 @@ def get_place_details(place_id, date, search, api_key):
                     f"{base_url}?{encoded_params}"
             # use empty image if error encountered in google's image
             except BaseException:
-                print("Okay")
                 place_info["photo_reference"][i] = "https://cdn.shopify.com/"
             "s/files/1/0533/2089/files"
             "/placeholder-images-image"
             "_large.png?format=jpg&qua"
             "lity=90&v=1530129081"
-
-        return is_location_saved(place_info)
+        return is_location_saved(place_info, user)
     except BaseException:
         # use empty image if error encountered in using google's images
         place_info["photo_reference"] = ["https://cdn.shopify.com/s/files/1"
@@ -312,18 +310,20 @@ def get_place_details(place_id, date, search, api_key):
                                          "placeholder-images-image_large"
                                          ".png?format=jpg&"
                                          "quality=90&v=1530129081"] * 4
-        return is_location_saved(place_info)
+        return is_location_saved(place_info, user)
 
 
 # check if a location is already added to favourite
 # previously, and mark it accordingly
-def is_location_saved(locations):
+def is_location_saved(locations, user):
     try:
         conn, cursor = db.connect_to_db()
+        print(locations[0]['location'])
         cursor.execute("""
                        SELECT placeid FROM placesadded WHERE userid = %s
-                       AND date = %s
-                       """, (current_user.id, locations[0]["date"]))
+                       AND date = %s AND location = %s
+                       """, (user, locations[0]["date"], 
+                             locations[0]['location']))
         # get a tuple of all the placeids from places table
         saved_locations_records = cursor.fetchall()
         conn.commit()

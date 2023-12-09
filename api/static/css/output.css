@@ -825,8 +825,9 @@ video {
   height: 100%;
 }
 
-.h-\[12\.5rem\] {
-  height: 12.5rem;
+
+.h-\[10rem\] {
+  height: 10rem;
 }
 
 .h-\[40rem\] {
@@ -894,12 +895,16 @@ video {
   width: 100%;
 }
 
-.w-\[18\.75rem\] {
-  width: 18.75rem;
+.w-\[35\%\] {
+  width: 35%;
 }
 
 .w-\[47\%\] {
   width: 47%;
+}
+
+.w-\[65\%\] {
+  width: 65%;
 }
 
 .w-\[90\%\] {
@@ -1113,6 +1118,11 @@ video {
   border-radius: 0.75rem;
 }
 
+.rounded-l-lg {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
 .border {
   border-width: 1px;
 }
@@ -1202,11 +1212,6 @@ video {
   background-color: rgb(239 68 68 / var(--tw-bg-opacity));
 }
 
-.bg-slate-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(241 245 249 / var(--tw-bg-opacity));
-}
-
 .bg-slate-200 {
   --tw-bg-opacity: 1;
   background-color: rgb(226 232 240 / var(--tw-bg-opacity));
@@ -1228,6 +1233,11 @@ video {
 .object-cover {
   -o-object-fit: cover;
      object-fit: cover;
+}
+
+.object-center {
+  -o-object-position: center;
+     object-position: center;
 }
 
 .p-2 {
@@ -1903,7 +1913,7 @@ html {
 }
 
 .title-style {
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Roboto', sans-serif;
   color: #333333;
   font-size: 2rem;
   font-weight: 700;
@@ -2015,7 +2025,7 @@ html {
 }
 
 .backdrop {
-  z-index: -1;
+  z-index: -5;
   /* Negative z-index to position behind other elements */
 }
 

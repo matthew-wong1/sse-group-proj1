@@ -2,6 +2,7 @@
 
 {% block body %}
 
+<!-- Error message alert -->
 <div id="alert-popup" class="fixed top-20 z-50 left-1/2 transform -translate-x-1/2 flex items-center p-4 mb-4 rounded-lg text-red-800 border-t-4 shadow-2xl border-red-300 bg-red-50 opacity-100 transition-opacity duration-500" role="alert" style="display: none">
     <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
         <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
@@ -10,6 +11,7 @@
     </div>
 </div>
 
+<!-- Overlay for places details -->
 <div class="flex bg-slate-200 w-screen h-full flex-col items-center backdrop">
 	<div class ="flex mb-4"></div>
 	<div class="fixed top-0  left-0 z-20 w-[100%] h-[100%] bg-black bg-opacity-50 overlay items-center justify-center" onclick="hideOverlay()" style ="display:none">
@@ -20,8 +22,6 @@
 					<div class="flex flex-col">
 						<div>
 							<span class = "font-roboto text-gray-600 text-lg mr-3 ml-8">Food Options:</span>
-							<!---<i class="fa-solid cursor-pointer fa-beer-mug-empty mr-3 pt-2 text-xl text-gray-800" onclick="searchFood()" id='food'></i>
-							<i class="fa-solid cursor-pointer fa-mug-saucer mr-3 pt-2 text-xl text-gray-800" onclick="searchFood()" id='food'></i> -->
 							<i class="fa-solid cursor-pointer fa-utensils pt-2 text-xl text-gray-800" onclick="searchFood()" id='food'></i>
 						</div>
 						<div>
@@ -40,6 +40,7 @@
 		</div>
 	</div>
 
+	<!-- Header portion for temp, country name etc. -->
 	<div class =" flex justify-between w-[90%] mx-10 pr-5 pointer-events-none">
 		<div class = "max-w-[60%]">
 				<h1 class="font-black font-oswald text-9xl overflow-hidden relative z-10 ">{{cinfo["name"]}}</h1> 
@@ -74,10 +75,9 @@
 		</div>
 	</div>
 
-	
+	<!-- Images grid -->
 	<div class="jqueryGrid w-14">
 		<div class="jqueryGrid-sizer"></div>
-
 		{% for place in places %}
 		<div class="relative jqueryGrid-item p-2">
 			<img class='shadow-xl' src={{place.photo}} />

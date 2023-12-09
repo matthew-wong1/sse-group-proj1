@@ -247,7 +247,7 @@ def save_restaurant():
         return redirect(url_for("login"))
 
     # Get data from request and user_id from session
-    data = request.json or request.args
+    data = request.json
     user_id = current_user.id
 
     # Call the helper function to handle restaurant data saving
@@ -265,9 +265,41 @@ def delete_restaurant():
     data = request.json
     user_id = current_user.id
 
-    # Call the helper function to handle restaurant data deletion
+    # Call the helper function to handle places data deletion
     result = hres.delete_restaurant_data(user_id, data)
 
+    return result
+
+
+@app.route("/places/delete-places", methods=["POST"])
+def delete_places():
+    if not current_user.is_authenticated:
+        return redirect(url_for("login"))
+    # Get data from request and user_id from session
+    request_data = request.get_json()
+    user_id = current_user.id
+    # Call the helper function to handle places data deletion
+    result = hres.delete_restaurant_data(user_id, request_data)
+
+    return result
+
+
+@app.route("/places/save-places", methods=["POST"])
+def save_places():
+    if not current_user.is_authenticated:
+        return redirect(url_for("login"))
+
+    # Get data from request and user_id from session
+    request_data = request.get_json()
+    user_id = current_user.id
+    # Call the helper function to handle places data saving
+    data = plc.get_place_details(request_data["place_id"],
+                                 request_data["date"],
+                                 request_data["location"],
+                                 os.environ.get("GCLOUD_KEY"),
+                                 current_user.id)
+    data['photo_reference'] = data['photo_reference'][0]
+    result = hres.save_restaurant_data(user_id, data)
     return result
 
 
@@ -287,11 +319,13 @@ def favourites():
 
 @app.route("/favourites/opt", methods=["POST"])
 def favourites_optimize():
+    # get optimized path
     return fav.get_route(request.get_json(), os.environ.get("GCLOUD_KEY"))
 
 
 @app.route("/favourites/save", methods=["POST"])
 def favourites_save():
+    # retrieved saved places route order
     return fav.save_favourites_order(current_user.id, request.get_json())
 
 
@@ -299,12 +333,18 @@ def favourites_save():
 def get_places():
     location = request.args.get('location')
     date = request.args.get('date')
+    # if no proper arguments provided
     if ((location is None) | (date is None)):
         return redirect(url_for('index', status="no_results", query=location))
-    places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
+    # retrieved searched places
+    places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"),
+                            current_user.id)
+    # retrieved country name
     cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
+    # if no search found provided
     if ((len(places) == 0) | (cname["country_name"] == '')):
         return redirect(url_for('index', status="no_results", query=location))
+    # get country information, weather info
     cinfo_all = {**plc.get_cinfo(cname["country_name"]),
                  **plc.get_weather(places[0]["longlat"], date),
                  "name": plc.fuzzy_match(location, cname)}
@@ -315,10 +355,12 @@ def get_places():
 
 @app.route("/places/details", methods=["GET"])
 def get_place_details():
+    # get the details of a chosen place
     return plc.get_place_details(request.args.get('placeid'),
                                  request.args.get('date'),
                                  request.args.get('location'),
-                                 os.environ.get("GCLOUD_KEY"))
+                                 os.environ.get("GCLOUD_KEY"),
+                                 current_user.id)
 
 
 @app.errorhandler(404)
