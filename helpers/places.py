@@ -61,7 +61,8 @@ def get_places(search, date, api_key, user):
         encoded_params = urlencode(photo_params)
         base_url = 'https://maps.googleapis.com/maps/api/place/photo'
         response_list[i]["photo"] = f"{base_url}?{encoded_params}"
-        return is_location_saved(response_list, user)
+
+    return is_location_saved(response_list, user)
 
 
 # function to get the country and city name
