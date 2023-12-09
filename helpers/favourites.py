@@ -10,7 +10,6 @@ import helpers.connection as db
 def retrieve_favourites(user):
 
     conn, cursor = db.connect_to_db()
-
     sql = """
         SELECT
             CONCAT(a.location, ' (',CAST(a.date AS VARCHAR),')') AS trip,
@@ -28,9 +27,8 @@ def retrieve_favourites(user):
         WHERE a.userid = %s
         ORDER BY a.date DESC, index;
         """
-    cursor.execute(sql, user)
+    cursor.execute(sql, (user,))
     sql_results = cursor.fetchall()
-    print(sql_results)
     cursor.close()
     conn.close()
 
@@ -45,6 +43,7 @@ def retrieve_favourites(user):
 # order (if any), to facilitate display
 # frontend
 def get_favourites(user):
+
     results = retrieve_favourites(user)
 
     keys = [
@@ -62,7 +61,6 @@ def get_favourites(user):
         'type',
         'sortorder']
     data = [{k: v for k, v in zip(keys, result)} for result in results]
-
     # create a dictionary, with each tripid mapped to the
     # list of locations associated with the trip as well
     # as the sort order
