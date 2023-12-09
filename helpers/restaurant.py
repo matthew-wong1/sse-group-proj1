@@ -270,13 +270,16 @@ def fetch_additional_details(
 
 def is_restaurant_saved(restaurants):
     try:
+        first_restaurant_name = next(iter(restaurants))
+        date = restaurants[first_restaurant_name]["date"]
+        location = restaurants[first_restaurant_name]["location"]
         conn, cursor = connect_to_db()
         # cursor.execute("SELECT placeid FROM places")
         cursor.execute(
             """
                        SELECT placeid FROM placesadded
-                       WHERE userid = %s AND date = %s
-                       """, (current_user.id, restaurants["date"]))
+                       WHERE userid = %s AND date = %s AND location = %s
+                       """, (current_user.id, date, location))
         # get a tuple of all the placeids from places table
         saved_restaurants_records = cursor.fetchall()
         conn.commit()
@@ -438,7 +441,7 @@ def handle_places_table(cursor, data):
                 data["search_link"],
                 data["photo_reference"],
                 data["editorial_summary"],
-                "restaurant",
+                data["type"],
                 data["place_id"],
             ),
         )
@@ -460,7 +463,7 @@ def handle_places_table(cursor, data):
                 data["search_link"],
                 data["photo_reference"],
                 data["editorial_summary"],
-                "restaurant",
+                data["type"],
             ),
         )
 

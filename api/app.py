@@ -258,7 +258,7 @@ def save_restaurant():
 
 @app.route("/delete-restaurant", methods=["POST"])
 def delete_restaurant():
-    if '_user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for("login"))
 
     # Get data from request and user_id from session
