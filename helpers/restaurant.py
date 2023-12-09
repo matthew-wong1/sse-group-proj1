@@ -269,6 +269,8 @@ def fetch_additional_details(
 
 
 def is_restaurant_saved(restaurants):
+    cursor = None
+    conn = None
     try:
         first_restaurant_name = next(iter(restaurants))
         date = restaurants[first_restaurant_name]["date"]
@@ -286,8 +288,10 @@ def is_restaurant_saved(restaurants):
     except Exception:
         return restaurants
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
     # Convert the list of tuples to a set for faster lookup
     # tuple of placeids.
@@ -498,7 +502,8 @@ def delete_from_placesadded(cursor, user_id, data):
          data["date"], data["place_id"]),
     )
     print((user_id, data["location"],
-         data["date"], data["place_id"]))
+           data["date"], data["place_id"]))
+
 
 def delete_from_places_if_needed(cursor, place_id):
     # Check if no users have place_id in placesadded table

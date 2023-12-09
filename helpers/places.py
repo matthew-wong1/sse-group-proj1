@@ -61,8 +61,7 @@ def get_places(search, date, api_key, user):
         encoded_params = urlencode(photo_params)
         base_url = 'https://maps.googleapis.com/maps/api/place/photo'
         response_list[i]["photo"] = f"{base_url}?{encoded_params}"
-    
-    return is_location_saved(response_list, user)
+        return is_location_saved(response_list, user)
 
 
 # function to get the country and city name
@@ -322,7 +321,7 @@ def is_location_saved(locations, user):
         cursor.execute("""
                        SELECT placeid FROM placesadded WHERE userid = %s
                        AND date = %s AND location = %s
-                       """, (user, locations[0]["date"], 
+                       """, (user, locations[0]["date"],
                              locations[0]['location']))
         # get a tuple of all the placeids from places table
         saved_locations_records = cursor.fetchall()
