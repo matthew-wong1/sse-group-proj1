@@ -3,7 +3,8 @@ from json.decoder import JSONDecodeError
 
 import folium
 import requests
-from flask import jsonify, request, session
+from flask import jsonify, request
+from flask_login import current_user
 from requests.exceptions import HTTPError, RequestException
 from requests.utils import quote
 
@@ -275,9 +276,7 @@ def is_restaurant_saved(restaurants):
             """
                        SELECT placeid FROM placesadded
                        WHERE userid = %s AND date = %s
-                       """,
-            (session["_user_id"], restaurants["date"]),
-        )
+                       """, (current_user.id, restaurants["date"]))
         # get a tuple of all the placeids from places table
         saved_restaurants_records = cursor.fetchall()
         conn.commit()

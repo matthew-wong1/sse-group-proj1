@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import requests
-from flask import session
+from flask_login import current_user
 from fuzzywuzzy import process
 
 import helpers.connection as db
@@ -323,7 +323,7 @@ def is_location_saved(locations):
         cursor.execute("""
                        SELECT placeid FROM placesadded WHERE userid = %s
                        AND date = %s
-                       """, (session["_user_id"], locations[0]["date"]))
+                       """, (current_user.id, locations[0]["date"]))
         # get a tuple of all the placeids from places table
         saved_locations_records = cursor.fetchall()
         conn.commit()

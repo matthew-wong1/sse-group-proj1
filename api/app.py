@@ -1,10 +1,13 @@
 import json
 import os
+import secrets
 
+import requests
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, session, url_for
-from flask_login import (LoginManager, UserMixin, login_required, login_user,
-                         logout_user)
+from flask_login import (LoginManager, UserMixin, current_user, login_required,
+                         login_user, logout_user)
+from oauthlib.oauth2 import WebApplicationClient
 from requests.exceptions import HTTPError, RequestException
 
 import helpers.favourites as fav
@@ -24,6 +27,17 @@ login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+# Configure Google OAuth
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' - FOR LOCAL TESTING
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_DISCOVERY_URL = (
+    "https://accounts.google.com/.well-known/openid-configuration")
+
+
+# Set up OAuth 2 client
+client = WebApplicationClient(GOOGLE_CLIENT_ID)
+
 
 class User(UserMixin):
     def __init__(self, id, username):
@@ -33,7 +47,13 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User(id=user_id, username=get_username)
+    return User(id=user_id, username=get_username(user_id))
+
+
+# Retrieve Google's provider config
+# ADD ERROR HADNLING TO API CALL LATER
+def get_google_provider_config():
+    return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 
 # Configure routing
@@ -48,7 +68,7 @@ def index():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    if '_user_id' in session:
+    if current_user.is_authenticated:
         return redirect("/")
 
     if request.method == "POST":
@@ -78,22 +98,88 @@ def settings():
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
-        if (not match_password(session['username'], password_old)):
+        if (not match_password(current_user.username, password_old)):
             errors['password_old'] = "Incorrect password"
 
         check_password(password, repeat_password, errors)
 
         if success:
-            update_user(session['_user_id'], password)
+            update_user(current_user.id, password)
 
         # if errors empty, render success text?
         return render_template("settings.html", errors=errors)
     return render_template("settings.html")
 
 
+@app.route("/OAuth", methods=["GET", "POST"])
+def OAuth():
+    # Get endpoint for Google login
+    google_provider_config = get_google_provider_config()
+    auth_endpoint = google_provider_config["authorization_endpoint"]
+
+    # Construct request for Google login
+    request_uri = client.prepare_request_uri(
+        auth_endpoint,
+        redirect_uri=request.base_url+"/callback",
+        scope=["openid", "email"])
+    return redirect(request_uri)
+
+
+@app.route("/OAuth/callback", methods=["GET", "POST"])
+def callback():
+    # Get Google's Auth code
+    auth_code = request.args.get("code")
+
+    google_provider_config = get_google_provider_config()
+    token_endpoint = google_provider_config["token_endpoint"]
+
+    # Prepare request for tokens
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=request.base_url,
+        code=auth_code
+    )
+
+    # Send request for tokens
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
+    )
+
+    # Parse tokens
+    client.parse_request_body_response(json.dumps(token_response.json()))
+
+    # Get User information
+    userinfo_endpoint = google_provider_config["userinfo_endpoint"]
+    uri, headers, body = client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+
+    # Parse response from userinfo
+    email = userinfo_response.json()["email"]
+    # Throw error if email not avialable
+
+    # Check if user already exists
+    if not user_exists(email):
+        RAND_PASSWORD_LENGTH = 32
+        rand_password = secrets.token_urlsafe(RAND_PASSWORD_LENGTH)
+        add_user(email, rand_password)
+
+    # Create a user object
+    user = User(id=get_user_id(email), username=email)
+    login_user(user)
+
+    # Log in the user
+    login_user(user)
+
+    return redirect("/")
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if '_user_id' in session:
+    if current_user.is_authenticated:
         return redirect("/")
 
     errors = {}
@@ -106,15 +192,15 @@ def login():
             errors['login'] = 'Incorrect username or password'
             return render_template("login.html",
                                    username=username,
-                                   errors=errors)
+                                   errors=errors,
+                                   GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
 
         user = User(id=get_user_id(username), username=username)
         login_user(user)
-        session['username'] = username
         return redirect("/")
 
     else:
-        return render_template("login.html")
+        return render_template("login.html", GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
 
 
 @app.route("/logout")
@@ -157,7 +243,7 @@ def show_restaurants():
 
 @app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
-    if '_user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for("login"))
 
     # Get data from request and user_id from session
@@ -189,7 +275,7 @@ def delete_restaurant():
 @login_required
 def favourites():
     try:
-        favr = fav.get_favourites(session["_user_id"])
+        favr = fav.get_favourites(current_user.id)
         fav_json = {'data': favr}
         return render_template("favourites.html",
                                fav_json=json.dumps(fav_json), fav=favr)
@@ -206,7 +292,7 @@ def favourites_optimize():
 
 @app.route("/favourites/save", methods=["POST"])
 def favourites_save():
-    return fav.save_favourites_order(session["_user_id"], request.get_json())
+    return fav.save_favourites_order(current_user.id, request.get_json())
 
 
 @app.route("/places", methods=["GET"])
