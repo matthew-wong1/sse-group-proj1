@@ -45,7 +45,6 @@ def retrieve_favourites(user):
 # order (if any), to facilitate display
 # frontend
 def get_favourites(user):
-    
     results = retrieve_favourites(user)
 
     keys = [
@@ -98,7 +97,6 @@ def get_favourites(user):
                     key=lambda x: trip_data["sortorder"].index(
                         x['index']))
     return list(transformed_data.values())
-    
 
 
 # function to save the sorted order of the
