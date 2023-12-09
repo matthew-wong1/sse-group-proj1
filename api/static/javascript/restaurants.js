@@ -201,6 +201,7 @@ function toggleRestaurant(place_id) {
         }
     })
     .catch((error) => {
+        heartIcon.classList.remove('fa-beat');
         console.error('Error:', error);
         // Confirm with the user if they want to log in
         if (confirm('You need to be logged in to save to favourites. Would you like to log in now?')) {

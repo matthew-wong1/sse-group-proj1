@@ -825,6 +825,7 @@ video {
   height: 100%;
 }
 
+
 .h-\[10rem\] {
   height: 10rem;
 }
@@ -2030,11 +2031,6 @@ html {
 .backdrop {
   z-index: -5;
   /* Negative z-index to position behind other elements */
-}
-
-.hover\:bg-blue-200:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(191 219 254 / var(--tw-bg-opacity));
 }
 
 .hover\:bg-blue-600:hover {

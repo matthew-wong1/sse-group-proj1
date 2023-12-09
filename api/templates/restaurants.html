@@ -33,7 +33,7 @@
                 </div>
                 <div class="mt-2">
                     <!-- Dancing Script font -->
-                    <h2 class="text-5xl font-roboto font-bold text-logo-contrast bg-opacity-50 bg-blue-100 px-4 py-2 inline-block rounded-lg transition-all hover:bg-blue-200 cursor-pointer">
+                    <h2 class="text-5xl font-roboto font-bold text-logo-contrast bg-opacity-50 bg-blue-100 px-4 py-2 inline-block rounded-lg transition-all">
                         {{ search_details['name'].title() }}
                     </h2>
                 </div>
@@ -86,9 +86,9 @@
             {% for name, details in restaurants.items() %}
                 <div class="flex flex-col md:flex-row bg-white rounded-lg shadow-lg overflow-hidden mx-2 relative">
                     <!-- Image container -->
-                    <div class="md:w-48 flex items-center justify-center p-4">
+                    <div class="md:w-48 flex items-center justify-center p-4" style="height: 150px; overflow: hidden;">
                         {% if details['photo_url'] %}        
-                        <img class="object-cover rounded-lg" src="{{ details['photo_url'] }}" alt="Photo of {{ name }}" style="max-height: 200px;">
+                        <img class="object-cover rounded-lg w-full h-full" src="{{ details['photo_url'] }}" alt="Photo of {{ name }}" style="max-height: 200px;">
                         {% endif %}
                     </div>
                     <!-- Restaurant details -->
