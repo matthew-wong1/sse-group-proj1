@@ -15,7 +15,7 @@ place_id = "ChIJz-VvsdMEdkgR1lQfyxijRMw"  # default place id
 @pytest.mark.parametrize("search, date, expected",
                          [("London", '2023-01-01', 'London')])
 def test_get_places(search, date, expected):
-    assert get_places(search, date, api_key, '11')[0]['location'] == expected
+    assert get_places(search, date, api_key)[0]['location'] == expected
 
 
 dummy_location = {'longlat': {'lat': 51.5044028, 'lng': -0.0865331}}
@@ -75,11 +75,11 @@ def test_fuzzy_match():
 
 def test_get_place_details():
     assert get_place_details(place_id, '2023-01-01',
-                             'London', api_key, '11')['place_id'] == place_id
+                             'London', api_key)['place_id'] == place_id
     assert get_place_details(place_id, '2023-01-01',
-                             'London', api_key, '11')['type'] == "Places"
+                             'London', api_key)['type'] == "Places"
     assert get_place_details(place_id, '2023-01-01',
-                             'London', api_key, '11')['location'] == "London"
+                             'London', api_key)['location'] == "London"
 
 
 dummy_places = [{'longlat': {'lat': 51.5044028, 'lng': -0.0865331},
@@ -89,5 +89,4 @@ dummy_places = [{'longlat': {'lat': 51.5044028, 'lng': -0.0865331},
 
 
 def test_is_location_saved():
-    assert is_location_saved(dummy_places[0],
-                             '10')["name"] == 'The View from The Shard'
+    assert is_location_saved(dummy_places[0])["name"] == 'The View from The Shard'

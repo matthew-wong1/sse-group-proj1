@@ -81,7 +81,7 @@ function createList(multiplePlacesArrays) {
 					<div class='flex items-center'>
 					<!-- Adjustments to image container for equal spacing -->
 					<div class="flex justify-center items-center w-[35%] 
-						h-[10rem]">     
+            h-[10rem]">     
 						<img class="rounded-l-lg object-center" 
 							src="${place.photo_reference}" 
 							alt="Photo of ${place.name}">

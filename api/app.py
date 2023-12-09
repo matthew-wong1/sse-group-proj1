@@ -287,6 +287,7 @@ def delete_places():
 @app.route("/places/save-places", methods=["POST"])
 def save_places():
     if not current_user.is_authenticated:
+        print('im here')
         return redirect(url_for("login"))
 
     # Get data from request and user_id from session
@@ -337,8 +338,7 @@ def get_places():
     if ((location is None) | (date is None)):
         return redirect(url_for('index', status="no_results", query=location))
     # retrieved searched places
-    places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"),
-                            current_user.id)
+    places = plc.get_places(location, date, os.environ.get("GCLOUD_KEY"))
     # retrieved country name
     cname = plc.get_cname(places[0], os.environ.get("GCLOUD_KEY"))
     # if no search found provided
@@ -359,8 +359,7 @@ def get_place_details():
     return plc.get_place_details(request.args.get('placeid'),
                                  request.args.get('date'),
                                  request.args.get('location'),
-                                 os.environ.get("GCLOUD_KEY"),
-                                 current_user.id)
+                                 os.environ.get("GCLOUD_KEY"))
 
 
 @app.errorhandler(404)

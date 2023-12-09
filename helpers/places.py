@@ -4,12 +4,13 @@ from urllib.parse import urlencode
 import requests
 from fuzzywuzzy import process
 
+from flask_login import current_user
 import helpers.connection as db
 
 
 # function to get the list of info e.g images, names, latitude
 # for the searched location
-def get_places(search, date, api_key, user):
+def get_places(search, date, api_key):
     url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
     params = {
         'query': 'Places Of Interest in ' + search,
@@ -62,7 +63,7 @@ def get_places(search, date, api_key, user):
         base_url = 'https://maps.googleapis.com/maps/api/place/photo'
         response_list[i]["photo"] = f"{base_url}?{encoded_params}"
     
-    return is_location_saved(response_list, user)
+    return is_location_saved(response_list)
 
 
 # function to get the country and city name
@@ -224,7 +225,7 @@ def fuzzy_match(search, cname):
 
 
 # get the place details
-def get_place_details(place_id, date, search, api_key, user):
+def get_place_details(place_id, date, search, api_key):
 
     place_det_url = 'https://maps.googleapis.com/maps/api/place/details/json'
     place_det_params = {
@@ -302,7 +303,7 @@ def get_place_details(place_id, date, search, api_key, user):
             "/placeholder-images-image"
             "_large.png?format=jpg&qua"
             "lity=90&v=1530129081"
-        return is_location_saved(place_info, user)
+        return is_location_saved(place_info)
     except BaseException:
         # use empty image if error encountered in using google's images
         place_info["photo_reference"] = ["https://cdn.shopify.com/s/files/1"
@@ -310,19 +311,19 @@ def get_place_details(place_id, date, search, api_key, user):
                                          "placeholder-images-image_large"
                                          ".png?format=jpg&"
                                          "quality=90&v=1530129081"] * 4
-        return is_location_saved(place_info, user)
+        return is_location_saved(place_info)
 
 
 # check if a location is already added to favourite
 # previously, and mark it accordingly
-def is_location_saved(locations, user):
+def is_location_saved(locations):
     try:
         conn, cursor = db.connect_to_db()
         print(locations[0]['location'])
         cursor.execute("""
                        SELECT placeid FROM placesadded WHERE userid = %s
                        AND date = %s AND location = %s
-                       """, (user, locations[0]["date"], 
+                       """, (current_user.id, locations[0]["date"], 
                              locations[0]['location']))
         # get a tuple of all the placeids from places table
         saved_locations_records = cursor.fetchall()

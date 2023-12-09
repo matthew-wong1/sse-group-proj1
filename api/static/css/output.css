@@ -850,6 +850,10 @@ video {
   height: 100vh;
 }
 
+.h-\[20rem\] {
+  height: 20rem;
+}
+
 .max-h-\[13rem\] {
   max-height: 13rem;
 }
