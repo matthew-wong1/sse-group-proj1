@@ -7,7 +7,6 @@ from flask_login import (LoginManager, UserMixin, login_required, login_user,
                          logout_user)
 from requests.exceptions import HTTPError, RequestException
 
-import helpers.connection as db
 import helpers.favourites as fav
 import helpers.places as plc
 import helpers.restaurant as hres
@@ -160,175 +159,30 @@ def show_restaurants():
 def save_restaurant():
     if '_user_id' not in session:
         return redirect(url_for("login"))
-    conn = None
-    cursor = None
-    try:
-        if request.args:
-            data = plc.get_place_details(request.args.get('placeid'),
-                                         request.args.get('date'),
-                                         request.args.get('location'),
-                                         os.environ.get("GCLOUD_KEY"))
-            if isinstance(data.get('photo_reference'), list):
-                data['photo_reference'] = data['photo_reference'][0]
-        else:
-            # data will be from the JS passing the dictionary of info
-            data = request.json
-        conn, cursor = db.connect_to_db()
-        # Step 1: Check if the row exists for place_id
-        # Check if the row exists using EXISTS
-        check_query = """
-            SELECT EXISTS(
-                SELECT 1 FROM places
-                WHERE placeid = %s
-            )
-        """
-        cursor.execute(check_query, (data["place_id"],))
-        exists = cursor.fetchone()[0]
 
-        # Step 2: Update or Insert based on the check
-        if exists:
-            # Update
-            update_query = """
-                UPDATE places
-                SET name = %s, ratings = %s, rating_count = %s,
-                search_link = %s, photo_reference = %s,
-                editorial_summary = %s, type = %s
-                WHERE placeid = %s
-            """
-            cursor.execute(
-                update_query,
-                (
-                    data["name"],
-                    data["ratings"],
-                    data["rating_count"],
-                    data["search_link"],
-                    data["photo_reference"],
-                    data["editorial_summary"],
-                    "restaurant",
-                    data["place_id"],
-                ),
-            )
-        else:
-            # Insert
-            insert_query = """
-                INSERT INTO places (placeid, name, ratings,
-                rating_count, search_link, photo_reference,
-                editorial_summary, type)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(
-                insert_query,
-                (
-                    data["place_id"],
-                    data["name"],
-                    data["ratings"],
-                    data["rating_count"],
-                    data["search_link"],
-                    data["photo_reference"],
-                    data["editorial_summary"],
-                    "restaurant",
-                ),
-            )
+    # Get data from request and user_id from session
+    data = request.json or request.args
+    user_id = session["_user_id"]
 
-        # TEMP userid BEING USED!
-        userid = session["_user_id"]
+    # Call the helper function to handle restaurant data saving
+    result = hres.save_restaurant_data(user_id, data)
 
-        # userid = "tp4646"\
-        # Insert into placesadded table
-        # this table will be unique so no need for a check
-        insert_query = """
-            INSERT INTO placesadded (userid, location, date, placeid)
-            VALUES (%s, %s, %s, %s)
-        """
-        cursor.execute(
-            insert_query,
-            (
-                userid,
-                data["location"],
-                data["date"],
-                data["place_id"],
-            ),
-        )
-
-        conn.commit()
-
-    except Exception as e:
-        print(e)
-        return {"status": "error", "message": str(e)}
-
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-
-    return {"status": "success"}
+    return result
 
 
 @app.route("/delete-restaurant", methods=["POST"])
 def delete_restaurant():
-    conn = None
-    cursor = None
     if '_user_id' not in session:
-        # User is not logged in, redirect to login page
         return redirect(url_for("login"))
-    if request.args:
-        data = plc.get_place_details(request.args.get('placeid'),
-                                     request.args.get('date'),
-                                     request.args.get('location'),
-                                     os.environ.get("GCLOUD_KEY"))
-        if isinstance(data.get('photo_reference'), list):
-            data['photo_reference'] = data['photo_reference'][0]
-    else:
-        data = request.json
-    # Retrieve user_id from session
-    userid = session["_user_id"]
-    # userid = "tp4646"
 
-    try:
-        conn, cursor = db.connect_to_db()
+    # Get data from request and user_id from session
+    data = request.json
+    user_id = session["_user_id"]
 
-        # Delete the entry from the second table
-        sql_delete_table2 = (
-            "DELETE FROM placesadded WHERE userid"
-            " = %s AND location = %s "
-            "AND date = %s AND placeid = %s"
-        )
-        cursor.execute(
-            sql_delete_table2,
-            (userid, data["location"], data["date"], data["place_id"]),
-        )
+    # Call the helper function to handle restaurant data deletion
+    result = hres.delete_restaurant_data(user_id, data)
 
-        # Check if no users have place_id in placesadded table
-        sql_check = (
-            "SELECT EXISTS (SELECT 1 FROM placesadded WHERE placeid = %s)"
-        )
-        cursor.execute(sql_check, (data["place_id"],))
-        # Check if any row exists in table2 with the given place_id
-        exists = cursor.fetchone()[0]
-
-        # If place_id is not in the placesadded table i.e. user table
-        if not exists:
-            sql_delete_table1 = "DELETE FROM places WHERE placeid = %s"
-            cursor.execute(sql_delete_table1, (data["place_id"],))
-
-        conn.commit()
-
-    except Exception as e:
-        conn.rollback()  # Rollback the transaction in case of an error
-        # logging.error(e) Log the error
-        return {"status": "error", "message": str(e)}
-
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-
-    return {
-        "status": "success",
-        "message": "Operation completed successfully",
-    }
+    return result
 
 
 @app.route("/favourites", methods=["GET"])

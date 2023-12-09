@@ -281,8 +281,7 @@ def is_restaurant_saved(restaurants):
         # get a tuple of all the placeids from places table
         saved_restaurants_records = cursor.fetchall()
         conn.commit()
-    except Exception as e:
-        print(e)
+    except Exception:
         return restaurants
     finally:
         cursor.close()
@@ -408,3 +407,161 @@ def handle_error(e):
         return jsonify({"error": "Please check your connection"}), 500
     else:
         return jsonify({"error": str(e)}), 500
+
+
+def handle_places_table(cursor, data):
+    # Check if the row exists using EXISTS
+    check_query = """
+        SELECT EXISTS(
+            SELECT 1 FROM places
+            WHERE placeid = %s
+        )
+    """
+    cursor.execute(check_query, (data["place_id"],))
+    exists = cursor.fetchone()[0]
+
+    # Update or Insert based on the check
+    if exists:
+        # Update existing record
+        update_query = """
+            UPDATE places
+            SET name = %s, ratings = %s, rating_count = %s,
+            search_link = %s, photo_reference = %s,
+            editorial_summary = %s, type = %s
+            WHERE placeid = %s
+        """
+        cursor.execute(
+            update_query,
+            (
+                data["name"],
+                data["ratings"],
+                data["rating_count"],
+                data["search_link"],
+                data["photo_reference"],
+                data["editorial_summary"],
+                "restaurant",
+                data["place_id"],
+            ),
+        )
+    else:
+        # Insert new record
+        insert_query = """
+            INSERT INTO places (placeid, name, ratings,
+            rating_count, search_link, photo_reference,
+            editorial_summary, type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(
+            insert_query,
+            (
+                data["place_id"],
+                data["name"],
+                data["ratings"],
+                data["rating_count"],
+                data["search_link"],
+                data["photo_reference"],
+                data["editorial_summary"],
+                "restaurant",
+            ),
+        )
+
+
+def handle_placesadded_table(cursor, user_id, data):
+    # Insert into placesadded table
+    insert_query = """
+        INSERT INTO placesadded
+        (userid, location, date, placeid)
+        VALUES (%s, %s, %s, %s)
+    """
+    cursor.execute(
+        insert_query,
+        (
+            user_id,
+            data["location"],
+            data["date"],
+            data["place_id"],
+        ),
+    )
+
+
+def delete_from_placesadded(cursor, user_id, data):
+    sql_delete = """
+        DELETE FROM placesadded
+        WHERE userid = %s AND location = %s
+        AND date = %s AND placeid = %s
+    """
+    cursor.execute(
+        sql_delete,
+        (user_id, data["location"],
+         data["date"], data["place_id"]),
+    )
+
+
+def delete_from_places_if_needed(cursor, place_id):
+    # Check if no users have place_id in placesadded table
+    sql_check = ("SELECT EXISTS (SELECT 1 FROM "
+                 "placesadded WHERE placeid = %s)")
+    cursor.execute(sql_check, (place_id,))
+    exists = cursor.fetchone()[0]
+
+    # If place_id is not in the placesadded table
+    if not exists:
+        sql_delete = "DELETE FROM places WHERE placeid = %s"
+        cursor.execute(sql_delete, (place_id,))
+
+
+def save_restaurant_data(user_id, data):
+    conn, cursor = None, None
+    try:
+        # Set up DB connection
+        conn, cursor = connect_to_db()
+
+        # Handle 'places' table
+        handle_places_table(cursor, data)
+
+        # Handle 'placesadded' table
+        handle_placesadded_table(cursor, user_id, data)
+
+        # Commit changes to the database
+        conn.commit()
+
+        return {"status": "success"}
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return {"status": "error", "message": str(e)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+def delete_restaurant_data(user_id, data):
+    conn, cursor = None, None
+    try:
+        # Set up DB connection
+        conn, cursor = connect_to_db()
+
+        # Delete from placesadded table
+        delete_from_placesadded(cursor, user_id, data)
+
+        # Check and delete from places table if needed
+        delete_from_places_if_needed(cursor, data["place_id"])
+
+        # Commit changes to the database
+        conn.commit()
+        return {"status": "success", "message": "Operation successful"}
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return {"status": "error", "message": str(e)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
