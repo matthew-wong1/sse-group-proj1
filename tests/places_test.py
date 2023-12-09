@@ -89,4 +89,4 @@ dummy_places = [{'longlat': {'lat': 51.5044028, 'lng': -0.0865331},
 
 
 def test_is_location_saved():
-    assert is_location_saved(dummy_places[0])["name"] == 'The View from The Shard'
+    assert is_location_saved(dummy_places[0])[0]["name"] == 'The View from The Shard'
