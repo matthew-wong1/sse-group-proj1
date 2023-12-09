@@ -141,14 +141,12 @@ createList(places);
 
 // save the index of the item being dragged
 function dragStart() {
-  // console.log('Event: ', 'dragstart');
   dragStartIndex = +this.closest('li').getAttribute('data-index');
 }
 
 // interaction when the dragged object
 // enters the area
 function dragEnter() {
-  // console.log('Event: ', 'dragenter');
   this.classList.add('over');
 }
 

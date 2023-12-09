@@ -99,8 +99,10 @@ elementsWithDataName.forEach(element => {
                     // saved to favourites
                     const heart = document.getElementById('heart-in-details');
                     if (data.is_saved === true) {
+                        heart.classList.remove('far');
                         heart.classList.add('fas');
                     } else {
+                        heart.classList.remove('fas');
                         heart.classList.add('far');
                     }
 
@@ -333,7 +335,6 @@ function toggleHeartInList(heart_placeid) {
     })
     .then(data => {
         heartIcon.classList.remove('fa-beat');
-        console.log(data.status)
         if (data.status === 'success') {
             // Toggle the icon
             if (isSaved) {
