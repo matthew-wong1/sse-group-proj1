@@ -73,10 +73,7 @@ elementsWithDataName.forEach(element => {
                 `${encodeURIComponent(search_location)}`)
                 .then(response => {
                     if (!response.ok) {   
-                        popup.className = red;
-                        document.getElementById('alert-text').innerHTML = 
-                            "The details for this place are not available.";
-                        showPopup();
+                        throw new Error("error loading the place!")
                     }
                     return response.json();
                 })
@@ -242,9 +239,10 @@ function toggleHeartInDet() {
     })
     .then(response => {
         if (!response.ok) {
-            console.log("here")
             if (response.status === 401) {
                 throw new Error("User not logged in")
+            } else {
+                throw new Error("Server error!")
             }
         }
         return response.json()
@@ -327,6 +325,8 @@ function toggleHeartInList(heart_placeid) {
         if (!response.ok) {
             if (response.status === 401) {
                 throw new Error("User not logged in")
+            } else {
+                throw new Error("Server error!")
             }
         }
         return response.json()

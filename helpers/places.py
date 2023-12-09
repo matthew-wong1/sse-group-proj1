@@ -303,7 +303,8 @@ def get_place_details(place_id, date, search, api_key):
             "/placeholder-images-image"
             "_large.png?format=jpg&qua"
             "lity=90&v=1530129081"
-        return is_location_saved(place_info)
+        #print(is_location_saved(place_info))
+        return is_location_saved(place_info)[0]
     except BaseException:
         # use empty image if error encountered in using google's images
         place_info["photo_reference"] = ["https://cdn.shopify.com/s/files/1"
@@ -311,15 +312,16 @@ def get_place_details(place_id, date, search, api_key):
                                          "placeholder-images-image_large"
                                          ".png?format=jpg&"
                                          "quality=90&v=1530129081"] * 4
-        return is_location_saved(place_info)
+        return is_location_saved(place_info)[0]
 
 
 # check if a location is already added to favourite
 # previously, and mark it accordingly
 def is_location_saved(locations):
     try:
+        if not isinstance(locations, list):
+            locations = [locations]
         conn, cursor = db.connect_to_db()
-        print(locations[0]['location'])
         cursor.execute("""
                        SELECT placeid FROM placesadded WHERE userid = %s
                        AND date = %s AND location = %s
@@ -338,7 +340,6 @@ def is_location_saved(locations):
     # Convert the list of tuples to a set for faster lookup
     # tuple of placeids.
     saved_locations = set(record[0] for record in saved_locations_records)
-
     # Update the 'is_saved' status for each
     # location if its place_id is already added to the
     # collection of locations previously
@@ -349,4 +350,5 @@ def is_location_saved(locations):
     else:
         if locations['place_id'] in saved_locations:
             locations['is_saved'] = True
+        
     return locations
