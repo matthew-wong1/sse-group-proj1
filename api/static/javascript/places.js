@@ -239,20 +239,18 @@ function toggleHeartInDet() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(placedetails),
-        credentials: 'include' // test if this fixes log in error
     })
     .then(response => {
         if (!response.ok) {
-            popup.className = red
-            document.getElementById('alert-text').innerHTML = 
-                "There was an error saving the location. Please try again later"
-            showPopup()
+            console.log("here")
+            if (response.status === 401) {
+                throw new Error("User not logged in")
+            }
         }
-        return response.json();
+        return response.json()
     })
     .then(data => {
         heartIcon.classList.remove('fa-beat');
-
         if (data.status === 'success') {
             // Toggle the icon
             if (isSaved) {
@@ -280,10 +278,18 @@ function toggleHeartInDet() {
     })
     .catch((error) => {
         heartIcon.classList.remove('fa-beat');
-        popup.className = red
-        document.getElementById('alert-text').innerHTML = 
-            "There was an error saving the location. Please try again later"
-        showPopup()                         
+        // Confirm with the user if they want to log in
+        if (error.message === "User not logged in") {
+            if (confirm('You need to be logged in to save to favourites. Would you like to log in now?')) {
+            // If they confirm, redirect them to the login page
+            window.location.href = '/login'; 
+            }
+        } else {
+            popup.className = red
+            document.getElementById('alert-text').innerHTML = 
+                "There was an error saving the location. Please try again later"
+            showPopup()
+        }                        
     });
 }
 
@@ -305,7 +311,6 @@ function toggleHeartInList(heart_placeid) {
             
     // Choose the endpoint based on the current state
     const endpoint = isSaved ? '/places/delete-places' : '/places/save-places';
-    console.log(endpoint)
     fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -320,15 +325,15 @@ function toggleHeartInList(heart_placeid) {
     })
     .then(response => {
         if (!response.ok) {
-            popup.className = red
-            document.getElementById('alert-text').innerHTML = 
-                "There was an error saving the location. Please try again later"
-            showPopup()
+            if (response.status === 401) {
+                throw new Error("User not logged in")
+            }
         }
-        return response.json();
+        return response.json()
     })
     .then(data => {
         heartIcon.classList.remove('fa-beat');
+        console.log(data.status)
         if (data.status === 'success') {
             // Toggle the icon
             if (isSaved) {
@@ -348,9 +353,17 @@ function toggleHeartInList(heart_placeid) {
     })
     .catch((error) => {
         heartIcon.classList.remove('fa-beat');
-        popup.className = red
-        document.getElementById('alert-text').innerHTML =
-            "There was an error saving the location. Please try again later"
-        showPopup()                        
+        // Confirm with the user if they want to log in
+        if (error.message === "User not logged in") {
+            if (confirm('You need to be logged in to save to favourites. Would you like to log in now?')) {
+            // If they confirm, redirect them to the login page
+            window.location.href = '/login'; 
+            }
+        } else {
+            popup.className = red
+            document.getElementById('alert-text').innerHTML = 
+                "There was an error saving the location. Please try again later"
+            showPopup()
+        }                   
     });
 }

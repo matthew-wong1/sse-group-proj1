@@ -4,7 +4,8 @@ import secrets
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import (Flask, redirect, render_template, request, session, url_for,
+                   abort)
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
                          login_user, logout_user)
 from oauthlib.oauth2 import WebApplicationClient
@@ -244,7 +245,7 @@ def show_restaurants():
 @app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
     if not current_user.is_authenticated:
-        return redirect(url_for("login"))
+        abort(401, description="User not logged in")
 
     # Get data from request and user_id from session
     data = request.json
@@ -259,7 +260,7 @@ def save_restaurant():
 @app.route("/delete-restaurant", methods=["POST"])
 def delete_restaurant():
     if not current_user.is_authenticated:
-        return redirect(url_for("login"))
+        abort(401, description="User not logged in")
 
     # Get data from request and user_id from session
     data = request.json
@@ -274,7 +275,7 @@ def delete_restaurant():
 @app.route("/places/delete-places", methods=["POST"])
 def delete_places():
     if not current_user.is_authenticated:
-        return redirect(url_for("login"))
+        abort(401, description="User not logged in")
     # Get data from request and user_id from session
     request_data = request.get_json()
     user_id = current_user.id
@@ -287,9 +288,7 @@ def delete_places():
 @app.route("/places/save-places", methods=["POST"])
 def save_places():
     if not current_user.is_authenticated:
-        print('im here')
-        return redirect(url_for("login"))
-
+        abort(401, description="User not logged in")
     # Get data from request and user_id from session
     request_data = request.get_json()
     user_id = current_user.id
