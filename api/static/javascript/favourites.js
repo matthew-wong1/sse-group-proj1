@@ -62,32 +62,31 @@ function createList(multiplePlacesArrays) {
             </div>
             <div class="draggable my-2" draggable="true">
                 <div class="flex w-full bg-white rounded-lg shadow-lg overflow-hidden my-2 justify-between">
-                    <div class='flex'>
+                  <div class='flex items-center'>
                     <!-- Adjustments to image container for equal spacing -->
-                    <div class="flex w-[18.75rem] h-[12.5rem] overflow-hidden items-center justify-center py-2">     
-                        <img class="w-full object-cover rounded-lg" src="${place.photo_reference}" alt="Photo of ${place.name}" style="max-height: 200px;">
+                    <div class="flex justify-center items-center w-[35%] h-[10rem] ">     
+                      <img class="rounded-l-lg object-center" src="${place.photo_reference}" alt="Photo of ${place.name}">
                     </div>
-                    <div class="p-4 flex flex-col justify-between flex-grow">
-                        <div>
-                            <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold">
-                                ${place.name}
-                            </div>
-                            <div class="star-rating" style="--rating: ${place.ratings};"></div>
-                            <p class="text-gray-500 mt-2">${place.editorial_summary}</p>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <span class="text-lg font-semibold text-blue-800">${place.ratings}/5</span>
-                                <span class="text-xs text-gray-600">${place.rating_count} reviews</span>
-                                
-                            </div>
-                        </div>
-                        
+                    <div class="p-4 flex flex-col justify-between w-[65%]">
+                      <div>
+                          <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold">
+                              ${place.name}
+                          </div>
+                          <div class="star-rating" style="--rating: ${place.ratings};"></div>
+                          <p class="text-gray-500 mt-2">${place.editorial_summary}</p>
+                      </div>
+                      <div class="flex justify-between items-end">
+                          <div>
+                              <span class="text-lg font-semibold text-blue-800">${place.ratings}/5</span>
+                              <span class="text-xs text-gray-600">${place.rating_count} reviews</span>
+                              
+                          </div>
+                      </div>
                     </div>
-                    </div>
-                    <div class='flex items-center'>
-                        <i class="fas fa-grip-lines fa-2x pr-5 "></i>
-                    </div> 
+                  </div>
+                  <div class='flex items-center'>
+                      <i class="fas fa-grip-lines fa-2x pr-5 "></i>
+                  </div> 
                 </div> 
             </div>
                 
