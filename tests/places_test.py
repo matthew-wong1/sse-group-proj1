@@ -1,14 +1,14 @@
 import os
 
 import pytest
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # get_cinfo
 from helpers.places import (cinfo_empty, cinfo_search, fuzzy_match, get_cname,
                             get_place_details, get_places, get_weather,
                             interpret_weather, is_location_saved)
 
-load_dotenv()
+# load_dotenv()
 api_key = os.getenv("GCLOUD_KEY", "")
 place_id = "ChIJz-VvsdMEdkgR1lQfyxijRMw"  # default place id
 

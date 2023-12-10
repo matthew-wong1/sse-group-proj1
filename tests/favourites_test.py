@@ -1,12 +1,12 @@
 import os
 
 import pytest
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 from helpers.favourites import (get_favourites, get_route, retrieve_favourites,
                                 save_favourites_order)
 
-load_dotenv()
+# load_dotenv()
 api_key = os.getenv("GCLOUD_KEY", "")
 place_id = "ChIJz-VvsdMEdkgR1lQfyxijRMw"  # default place id
 
