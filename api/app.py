@@ -1,12 +1,13 @@
 import json
 import os
 import secrets
+from datetime import timedelta
 
 import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
                    url_for)
-from flask_login import (LoginManager, UserMixin, current_user, login_required,
+from flask_login import (LoginManager, current_user, login_required,
                          login_user, logout_user)
 from oauthlib.oauth2 import WebApplicationClient
 from requests.exceptions import HTTPError, RequestException
@@ -14,13 +15,17 @@ from requests.exceptions import HTTPError, RequestException
 import helpers.favourites as fav
 import helpers.places as plc
 import helpers.restaurant as hres
-from helpers.auth import (add_user, check_password, check_username,
+from helpers.auth import (User, add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
                           update_user, user_exists)
 
+# Configure app.py
 app = Flask(__name__)
 
+# Load environment variables
 load_dotenv()
+
+# Get app's secret key so Flask_login can manipulate the session
 app.config['SECRET_KEY'] = os.environ.get("SECRETKEY")
 
 # Configure Flask login
@@ -28,8 +33,15 @@ login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+# Set cookie expiration
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=31)
+
+# Allow cookies to refresh on request
+app.config['REMEMBER_COOKIE_REFRESH_EACH_REQUEST'] = True
+
 # Configure Google OAuth
-# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' - FOR LOCAL TESTING
+# to work on MacOS, turn off AirPlay receiver and do $ flask run --host=0.0.0.0
+# will only work on localhost
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = (
@@ -40,12 +52,7 @@ GOOGLE_DISCOVERY_URL = (
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 
-class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
-
-
+# Define user_loader callback to load user obj from user id in session
 @login_manager.user_loader
 def load_user(user_id):
     return User(id=user_id, username=get_username(user_id))
@@ -78,7 +85,7 @@ def signup():
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
-        # Check if fields empty
+        # Check if issues with username or password supplied
         check_username(username, errors)
         check_password(password, repeat_password, errors)
 
@@ -86,6 +93,7 @@ def signup():
             add_user(username, password)
             return redirect("login")
         return render_template("signup.html", username=username, errors=errors)
+
     return render_template("signup.html")
 
 
@@ -99,16 +107,20 @@ def settings():
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
+        # Check old password matches
         if (not match_password(current_user.username, password_old)):
             errors['password_old'] = "Incorrect password"
 
+        # Check validity of new password
         check_password(password, repeat_password, errors)
 
-        if success:
+        if not errors:
             update_user(current_user.id, password)
+            success = True
 
-        # if errors empty, render success text?
-        return render_template("settings.html", errors=errors)
+        # Render messages
+        return render_template("settings.html", errors=errors, success=success)
+
     return render_template("settings.html")
 
 
@@ -170,7 +182,6 @@ def callback():
 
     # Create a user object
     user = User(id=get_user_id(email), username=email)
-    login_user(user)
 
     # Log in the user
     login_user(user)
@@ -183,8 +194,8 @@ def login():
     if current_user.is_authenticated:
         return redirect("/")
 
-    errors = {}
     if request.method == "POST":
+        errors = {}
         username = request.form.get("username").strip()
         password = request.form.get("password")
 
@@ -193,15 +204,14 @@ def login():
             errors['login'] = 'Incorrect username or password'
             return render_template("login.html",
                                    username=username,
-                                   errors=errors,
-                                   GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
+                                   errors=errors)
 
         user = User(id=get_user_id(username), username=username)
         login_user(user)
         return redirect("/")
 
     else:
-        return render_template("login.html", GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
+        return render_template("login.html")
 
 
 @app.route("/logout")

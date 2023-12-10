@@ -14,14 +14,26 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run flake8
+      - name: Run flake8 on api/
         run: flake8 api/
 
-      - name: Run autoflake to remove unused imports
+      - name: Run flake8 on helpers/
+        run: flake8 helpers/
+
+      - name: Run flake8 on tests/
+        run: flake8 tests/
+
+      - name: Run autoflake to remove unused imports on api/
         run: autoflake -i --remove-all-unused-imports api/*.py
 
-      - name: Run isort to check ordering of imports
+      - name: Run isort to check ordering of imports on api/
         run: isort --check -diff api/
+
+      - name: Run isort to check ordering of imports on helpers/
+        run: isort --check -diff helpers/
+
+      - name: Run isort to check ordering of imports on tests/
+        run: isort --check -diff tests/
 
   run-unit-tests:
     needs: python-formatting

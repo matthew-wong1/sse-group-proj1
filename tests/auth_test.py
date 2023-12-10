@@ -1,7 +1,8 @@
 import pytest
 
 from helpers.auth import (check_password, check_username, get_user_id,
-                          get_username, match_password, user_exists)
+                          get_username, match_password, salt_and_hash,
+                          user_exists)
 
 
 @pytest.mark.parametrize("test_input,expected",
@@ -51,3 +52,10 @@ def test_get_user_id(test_input, expected):
                           ("4", "test")])
 def test_get_username(test_input, expected):
     assert get_username(test_input) == expected
+
+
+@pytest.mark.parametrize("test_input,test_input_compare",
+                         [("12345", "12345"),
+                          ("123", "12345")])
+def test_salt_and_hash_pwd(test_input, test_input_compare):
+    assert salt_and_hash(test_input) != salt_and_hash(test_input_compare)

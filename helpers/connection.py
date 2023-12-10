@@ -4,6 +4,8 @@ import psycopg2 as db
 from dotenv import load_dotenv
 
 
+# Connects to the postgres database, returning a tuple
+# of the connection and the cursor
 def connect_to_db():
     load_dotenv()
 
