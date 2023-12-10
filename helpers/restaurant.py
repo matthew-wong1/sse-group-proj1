@@ -314,7 +314,7 @@ def is_restaurant_saved(restaurants):
 def get_api_key_or_error():
     api_key = os.environ.get("GCLOUD_KEY")
     if not api_key:
-        raise ValueError("API key is empty")
+        raise ValueError("Sorry, no restaurants were found.")
     return api_key
 
 
@@ -351,7 +351,7 @@ def get_search_details(data):
 def get_lat_lng_or_error(api_key, place_id):
     lat, lng = fetch_place_details(api_key, place_id)
     if not lat or not lng:
-        raise ValueError("Failed to retrieve place details")
+        raise ValueError("Sorry, no restaurants were found.")
     return lat, lng
 
 
@@ -366,7 +366,7 @@ def get_nearby_data_or_error(api_key, lat, lng, search_details):
         search_details["open"],
     )
     if "status" not in nearby_data or nearby_data["status"] != "OK":
-        raise ValueError("Failed to retrieve data")
+        raise ValueError("Sorry, no restaurants were found.")
     return nearby_data
 
 
@@ -406,7 +406,7 @@ def generate_map_html(restaurant_data, lat, lng, dist):
 
 def handle_error(e):
     if isinstance(e, HTTPError):
-        return jsonify({"error": "HTTP error occurred"}), 500
+        return jsonify({"error": "Sorry, no restaurants were found."}), 500
     elif isinstance(e, JSONDecodeError):
         return jsonify({"error": "No Restaurants found"}), 500
     elif isinstance(e, RequestException):

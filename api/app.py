@@ -36,9 +36,6 @@ login_manager.login_view = "login"
 # Set cookie expiration
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=31)
 
-# Allow cookies to refresh on request
-app.config['REMEMBER_COOKIE_REFRESH_EACH_REQUEST'] = True
-
 # Configure Google OAuth
 # to work on MacOS, turn off AirPlay receiver and do $ flask run --host=0.0.0.0
 # will only work on localhost
