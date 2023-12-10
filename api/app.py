@@ -16,8 +16,10 @@ import helpers.places as plc
 import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
-                          update_user, user_exists)
+                          User, update_user, user_exists)
+User = User(UserMixin)
 
+# Configure app.py
 app = Flask(__name__)
 
 load_dotenv()
@@ -30,6 +32,8 @@ login_manager.login_view = "login"
 
 # Configure Google OAuth
 # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' - FOR LOCAL TESTING
+# to work on MacOS, turn off AirPlay receiver and do $ flask run --host=0.0.0.0
+# will only work on localhost
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = (
@@ -38,12 +42,6 @@ GOOGLE_DISCOVERY_URL = (
 
 # Set up OAuth 2 client
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
-
-
-class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
 
 
 @login_manager.user_loader

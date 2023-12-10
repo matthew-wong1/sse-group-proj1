@@ -1,6 +1,14 @@
 import bcrypt
 
+from flask_login import UserMixin
 from helpers.connection import connect_to_db
+
+
+# User class
+class User(UserMixin):
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
 
 
 # Sign-up check to see if the username is valid
