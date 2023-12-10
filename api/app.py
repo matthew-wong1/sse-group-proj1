@@ -249,6 +249,11 @@ def show_restaurants():
         return hres.handle_error(e)
 
 
+@app.route('/restaurant-not-found')
+def some_endpoint():
+    return render_template('restaurant-not-found.html'), 404
+
+
 @app.route("/save-restaurant", methods=["POST"])
 def save_restaurant():
     if not current_user.is_authenticated:

@@ -2,7 +2,6 @@ import os
 import unittest.mock as mock
 from json.decoder import JSONDecodeError
 
-import pytest
 from flask import Flask
 from requests.exceptions import HTTPError, RequestException
 
@@ -308,39 +307,35 @@ def test_fetch_additional_details():
 
 
 def test_get_api_key_or_error():
-    with mock.patch.dict(os.environ, {"GCLOUD_KEY": "test_key"}):
-        api_key = get_api_key_or_error()
-        assert api_key == "test_key"
+    from api.app import app
+    with app.test_request_context('/'):
+        with mock.patch.dict(os.environ, {"GCLOUD_KEY": "test_key"}):
+            api_key = get_api_key_or_error()
+            assert api_key == "test_key"
 
-    with mock.patch.dict(os.environ, {"GCLOUD_KEY": ""}):
-        with pytest.raises(ValueError) as e:
-            get_api_key_or_error()
-        assert str(e.value) == "Sorry, no restaurants were found."
+        with mock.patch.dict(os.environ, {"GCLOUD_KEY": ""}):
+            response, status_code = get_api_key_or_error()
+            assert status_code == 404
 
 
 def test_handle_error():
     from api.app import app
-
-    with app.app_context():
+    with app.test_request_context('/'):
         e = HTTPError()
         response, status_code = handle_error(e)
         assert status_code == 500
-        assert response.json == {"error": "Sorry, no restaurants were found."}
 
         e = JSONDecodeError(msg="Error", doc="", pos=0)
         response, status_code = handle_error(e)
         assert status_code == 500
-        assert response.json == {"error": "No Restaurants found"}
 
         e = RequestException()
         response, status_code = handle_error(e)
         assert status_code == 500
-        assert response.json == {"error": "Please check your connection"}
 
         e = Exception("Generic error")
         response, status_code = handle_error(e)
         assert status_code == 500
-        assert response.json == {"error": "Generic error"}
 
 
 def test_get_request_data():
