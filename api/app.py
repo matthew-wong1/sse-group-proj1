@@ -14,9 +14,9 @@ from requests.exceptions import HTTPError, RequestException
 import helpers.favourites as fav
 import helpers.places as plc
 import helpers.restaurant as hres
-from helpers.auth import (add_user, check_password, check_username,
+from helpers.auth import (User, add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
-                          User, update_user, user_exists)
+                          update_user, user_exists)
 
 # Configure app.py
 app = Flask(__name__)
