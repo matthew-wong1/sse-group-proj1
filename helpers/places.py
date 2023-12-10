@@ -200,9 +200,9 @@ def get_weather(location, date):
     # try to call the API. Returns null values if
     # the API is unable to retrieve the weather
     try:
-        response_weather = requests.get(weather_url, 
-                                        params=weather_params, 
-                                        timeout = 10)
+        response_weather = requests.get(weather_url,
+                                        params=weather_params,
+                                        timeout=10)
         data_weather = response_weather.json()["daily"]
         return {
             "weather": interpret_weather(data_weather["weather_code"][0]),
