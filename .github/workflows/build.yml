@@ -14,8 +14,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run flake8
+      - name: Run flake8 on api/
         run: flake8 api/
+
+      - name: Run flake8 on helpers
+        run: flake8 helpers/
+
+      - name: Run flake8 on tests
+        run: flake8 tests/
 
       - name: Run autoflake to remove unused imports
         run: autoflake -i --remove-all-unused-imports api/*.py
