@@ -56,6 +56,7 @@ jobs:
           PGPORT: ${{ secrets.PGPORT }}
           PGUSER: ${{ secrets.PGUSER }}
           SECRETKEY: ${{ secrets.SECRETKEY }}
+          GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
         run: pytest tests/*.py
 
   check-unit-test-coverage:
@@ -79,6 +80,7 @@ jobs:
             PGPORT: ${{ secrets.PGPORT }}
             PGUSER: ${{ secrets.PGUSER }}
             SECRETKEY: ${{ secrets.SECRETKEY }}
+            GCLOUD_KEY: ${{ secrets.GCLOUD_KEY }}
         run: |
           coverage run -m pytest tests/
           coverage report
