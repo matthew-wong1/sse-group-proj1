@@ -2,7 +2,7 @@ import bcrypt
 
 from helpers.connection import connect_to_db
 
-
+# Sign-up check to see if the username is valid
 def check_username(username, errors):
     if not username:
         errors['username'] = 'Please enter a username'
@@ -10,6 +10,7 @@ def check_username(username, errors):
         errors['username'] = 'Username already taken'
 
 
+# Checks if a given username already exists in the table of users
 def user_exists(username):
     conn, cursor = connect_to_db()
 
@@ -18,11 +19,13 @@ def user_exists(username):
                       WHERE username=%s""", [username])
     rec = cursor.fetchone()
 
+    cursor.close()
     conn.close()
 
     return rec is not None
 
 
+# Gets the id of a user from their username 
 def get_user_id(username):
     conn, cursor = connect_to_db()
 
@@ -36,6 +39,7 @@ def get_user_id(username):
     return rec[0]
 
 
+# Gets the username of a user from their id
 def get_username(user_id):
     conn, cursor = connect_to_db()
 
@@ -44,6 +48,7 @@ def get_username(user_id):
         WHERE id=%s""", [user_id])
     rec = cursor.fetchone()
 
+    cursor.close()
     conn.close()
 
     return rec[0]
@@ -60,6 +65,8 @@ def check_password(password, another_password, errors):
         errors['confirmation'] = 'Passwords do not match'
 
 
+# Checks if the provided password matches the one stored in the database
+# for the specified username
 def match_password(username, password):
     conn, cursor = connect_to_db()
 
@@ -68,11 +75,13 @@ def match_password(username, password):
         WHERE username=%s""", [username])
     rec = cursor.fetchone()
 
+    cursor.close()
     conn.close()
 
     return bcrypt.checkpw(password.encode('utf-8'), rec[0].encode('utf-8'))
 
 
+# Salts and hashes a password
 def salt_and_hash(password):
     bytes = password.encode('utf-8')
     salt = bcrypt.gensalt()
@@ -80,6 +89,7 @@ def salt_and_hash(password):
     return hash.decode('utf-8')
 
 
+# Adds a user to the database
 def add_user(username, password):
     hash = salt_and_hash(password)
     params = (username, hash)
@@ -91,9 +101,11 @@ def add_user(username, password):
         VALUES (%s, %s)""", params)
     conn.commit()
 
+    cursor.close()
     conn.close()
 
 
+# Updates a user's password
 def update_user(user_id, password):
     hash = salt_and_hash(password)
     conn, cursor = connect_to_db()
@@ -104,4 +116,5 @@ def update_user(user_id, password):
         WHERE id=%s""", params)
     conn.commit()
 
-    conn.close
+    cursor.close()
+    conn.close()
