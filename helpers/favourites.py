@@ -7,8 +7,8 @@ import requests
 import helpers.connection as db
 
 config = configparser.ConfigParser()
-file_path = '../ini/favourites.ini'
-absolute_path = os.path.abspath(os.path.join(os.getcwd(), file_path))
+file_path = 'ini/favourites.ini'
+absolute_path = os.path.join(os.getcwd(), file_path)
 config.read(absolute_path)
 
 
