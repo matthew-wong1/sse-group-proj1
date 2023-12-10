@@ -5,17 +5,8 @@
 {% endblock %}
 
 {% block body %}
-{% if exception %}
-<div id="alert-popup" class="absolute top-20 left-1/2 transform -translate-x-1/2 flex items-center p-4 mb-4 rounded-lg text-red-800 border-t-4 shadow-gray-400 shadow-md border-red-300 bg-red-50 opacity-100 transition-opacity duration-500" role="alert" style="display: flex">
-    <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-    </svg>
-    <div class="ms-3 text-sm font-medium">
-        Failed to sign up: {{ exception }}. Please try again later.
-    </div>
-</div>
 
-{% endif %} 
+{% include "useralerts.html" %}
 
 <div class="p-form">
     <form action="/signup" method="post" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-sm mx-auto">

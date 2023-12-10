@@ -16,8 +16,9 @@ import helpers.favourites as fav
 import helpers.places as plc
 import helpers.restaurant as hres
 from helpers.auth import (User, add_user, check_password, check_username,
-                          get_user_id, get_username, match_password,
-                          update_user, user_exists)
+                          get_google_provider_config, get_user_id,
+                          get_username, match_password, update_user,
+                          user_exists)
 
 # Configure app.py
 app = Flask(__name__)
@@ -38,12 +39,10 @@ app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=31)
 
 # Configure Google OAuth
 # to work on MacOS, turn off AirPlay receiver and do $ flask run --host=0.0.0.0
-# will only work on localhost
+# will only work on localhost and uncomment the following line:
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-GOOGLE_DISCOVERY_URL = (
-    "https://accounts.google.com/.well-known/openid-configuration")
-
 
 # Set up OAuth 2 client
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
@@ -53,12 +52,6 @@ client = WebApplicationClient(GOOGLE_CLIENT_ID)
 @login_manager.user_loader
 def load_user(user_id):
     return User(id=user_id, username=get_username(user_id))
-
-
-# Retrieve Google's provider config
-# ADD ERROR HADNLING TO API CALL LATER
-def get_google_provider_config():
-    return requests.get(GOOGLE_DISCOVERY_URL).json()
 
 
 # Configure routing
@@ -78,7 +71,6 @@ def signup():
 
     if request.method == "POST":
         errors = {}
-        exception = None
         username = request.form.get("username").strip()
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
@@ -88,19 +80,19 @@ def signup():
 
         try:
             check_username(username, errors)
-        
+
             if not errors:
                 add_user(username, password)
                 return redirect("login")
-        
-        except Exception as db_error:
-            exception = db_error
 
-        finally: 
             return render_template("signup.html",
                                    username=username,
-                                   errors=errors,
-                                   exception=exception)
+                                   errors=errors)
+
+        except Exception as db_error:
+            return render_template("signup.html",
+                                   username=username,
+                                   exception=db_error)
 
     return render_template("signup.html")
 
@@ -115,19 +107,25 @@ def settings():
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
-        # Check old password matches
-        if (not match_password(current_user.username, password_old)):
-            errors['password_old'] = "Incorrect password"
+        try:
+            # Check old password matches
+            if (not match_password(current_user.username, password_old)):
+                errors['password_old'] = "Incorrect password"
 
-        # Check validity of new password
-        check_password(password, repeat_password, errors)
+            # Check validity of new password
+            check_password(password, repeat_password, errors)
 
-        if not errors:
-            update_user(current_user.id, password)
-            success = True
+            if not errors:
+                update_user(current_user.id, password)
+                success = True
 
-        # Render messages
-        return render_template("settings.html", errors=errors, success=success)
+            # Render messages
+            return render_template("settings.html",
+                                   errors=errors,
+                                   success=success)
+
+        except Exception as db_error:
+            return render_template("settings.html", exception=db_error)
 
     return render_template("settings.html")
 
@@ -135,7 +133,11 @@ def settings():
 @app.route("/OAuth", methods=["GET", "POST"])
 def OAuth():
     # Get endpoint for Google login
-    google_provider_config = get_google_provider_config()
+    try:
+        google_provider_config = get_google_provider_config()
+    except Exception as api_error:
+        return render_template("login.html", exception=api_error)
+
     auth_endpoint = google_provider_config["authorization_endpoint"]
 
     # Construct request for Google login
@@ -149,9 +151,12 @@ def OAuth():
 @app.route("/OAuth/callback", methods=["GET", "POST"])
 def callback():
     # Get Google's Auth code
-    auth_code = request.args.get("code")
+    try:
+        auth_code = request.args.get("code")
+        google_provider_config = get_google_provider_config()
+    except Exception as api_error:
+        return render_template("login.html", exception=api_error)
 
-    google_provider_config = get_google_provider_config()
     token_endpoint = google_provider_config["token_endpoint"]
 
     # Prepare request for tokens
@@ -171,22 +176,27 @@ def callback():
     )
 
     # Parse tokens
-    client.parse_request_body_response(json.dumps(token_response.json()))
+    try:
+        client.parse_request_body_response(json.dumps(token_response.json()))
 
-    # Get User information
-    userinfo_endpoint = google_provider_config["userinfo_endpoint"]
-    uri, headers, body = client.add_token(userinfo_endpoint)
-    userinfo_response = requests.get(uri, headers=headers, data=body)
+        # Get User information
+        userinfo_endpoint = google_provider_config["userinfo_endpoint"]
+        uri, headers, body = client.add_token(userinfo_endpoint)
+        userinfo_response = requests.get(uri, headers=headers, data=body)
 
-    # Parse response from userinfo
-    email = userinfo_response.json()["email"]
-    # Throw error if email not avialable
+        # Parse response from userinfo
+        email = userinfo_response.json()["email"]
+    except Exception as api_error:
+        return render_template("login.html", exception=api_error)
 
     # Check if user already exists
-    if not user_exists(email):
-        RAND_PASSWORD_LENGTH = 32
-        rand_password = secrets.token_urlsafe(RAND_PASSWORD_LENGTH)
-        add_user(email, rand_password)
+    try:
+        if not user_exists(email):
+            RAND_PASSWORD_LENGTH = 32
+            rand_password = secrets.token_urlsafe(RAND_PASSWORD_LENGTH)
+            add_user(email, rand_password)
+    except Exception as db_error:
+        return render_template("login.html", exception=db_error)
 
     # Create a user object
     user = User(id=get_user_id(email), username=email)
@@ -207,19 +217,24 @@ def login():
         username = request.form.get("username").strip()
         password = request.form.get("password")
 
-        if (not user_exists(username) or
-           (user_exists and not match_password(username, password))):
-            errors['login'] = 'Incorrect username or password'
+        try:
+            if (not user_exists(username) or
+               (user_exists and not match_password(username, password))):
+                errors['login'] = 'Incorrect username or password'
+                return render_template("login.html",
+                                       username=username,
+                                       errors=errors)
+
+        except Exception as db_error:
             return render_template("login.html",
                                    username=username,
-                                   errors=errors)
+                                   exception=db_error)
 
         user = User(id=get_user_id(username), username=username)
         login_user(user)
         return redirect("/")
 
-    else:
-        return render_template("login.html")
+    return render_template("login.html")
 
 
 @app.route("/logout")

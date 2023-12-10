@@ -6,6 +6,8 @@
 
 {% block body %}
 
+{% include "useralerts.html" %}
+
 <div class="p-form">
     <form action="/login" method="post" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-sm mx-auto">
         <!-- Username field-->
@@ -45,5 +47,5 @@
 
 </div>
 
-
+<script src="{{ url_for('static', filename='/javascript/index.js') }}"></script>
 {% endblock %}
