@@ -19,7 +19,7 @@ from helpers.restaurant import (fetch_additional_details,
                                 search_nearby_restaurants,
                                 sort_and_slice_restaurants)
 
-api_key = os.getenv("GCLOUD_KEY", "")
+api_key = os.environ.get("GCLOUD_KEY", "")
 place_id = "ChIJz-VvsdMEdkgR1lQfyxijRMw"  # default place id
 
 
