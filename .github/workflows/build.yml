@@ -84,7 +84,8 @@ jobs:
   #         coverage report
 
   deploy-to-vercel:
-    needs: check-unit-test-coverage
+    #needs: check-unit-test-coverage
+    needs: python-formatting
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
