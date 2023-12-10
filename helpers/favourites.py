@@ -4,30 +4,26 @@ import requests
 
 import helpers.connection as db
 
+import configparser
+
+import os
+
+
+config = configparser.ConfigParser()
+file_path = '../ini/favourites.ini'
+absolute_path = os.path.abspath(os.path.join(os.getcwd(), file_path))
+
+print(absolute_path)
+config.read(absolute_path)
 
 # function to return the locations user had saved as favourites
 # from the database along with the place details
 def retrieve_favourites(user):
-
+    if 'UserSettings' in config:
+        print("UserSettings section found.")
+    print(config['query']['retrieve_favourites'])
     conn, cursor = db.connect_to_db()
-    sql = """
-        SELECT
-            CONCAT(a.location, ' (',CAST(a.date AS VARCHAR),')') AS trip,
-            a.id AS index, a.location, a.date, a.placeid, b.name,
-            CAST(b.ratings AS FLOAT) AS ratings,
-            b.rating_count, b.search_link, b.photo_reference,
-            b.editorial_summary, b.type, c.sortorder
-        FROM placesadded a
-        LEFT JOIN places b
-            ON a.placeid = b.placeid
-        LEFT JOIN placesorder c
-            ON CONCAT(a.userid, a.location,
-                ' (',CAST(a.date AS VARCHAR),')')
-                = c.id
-        WHERE a.userid = %s
-        ORDER BY a.date DESC, index;
-        """
-    cursor.execute(sql, (user,))
+    cursor.execute(config['query']['retrieve_favourites'], (user,))
     sql_results = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -103,15 +99,8 @@ def save_favourites_order(user, sortedList):
     trip_id = sortedList[0]['tripid']
     sorted_idx = [x['idx'] for x in sortedList]
     conn, cursor = db.connect_to_db()
-    sql = """
-        INSERT INTO placesorder (id, sortorder)
-        VALUES (%(id)s, %(sortorder)s)
-        ON CONFLICT (id) DO UPDATE
-        SET sortorder = %(sortorder)s;
-        """
-    cursor.execute(sql,
-                   {"id": user + trip_id,
-                    "sortorder": (sorted_idx)})
+    cursor.execute(config['query']['save_fav_order'],
+                   (user + trip_id, sorted_idx, sorted_idx))
     conn.commit()
     cursor.close()
     conn.close()
