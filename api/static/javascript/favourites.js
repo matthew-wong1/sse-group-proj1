@@ -31,7 +31,6 @@ const red = "fixed top-20 z-50 left-1/2 transform -translate-x-1/2 \
 const green = "fixed top-20 z-50 left-1/2 transform -translate-x-1/2 flex \
 	items-center p-4 mb-4 rounded-lg text-green-800 border-t-4 shadow-2xl \
 	border-green-300 bg-green-50 opacity-100 transition-opacity duration-500"
-console.log(places)
 // trigger pop up if there is no places saved
 if (places.length === 0 || places == null ||  places === undefined) {
 	popup.className = green;
@@ -220,6 +219,7 @@ function optimize(tripid) {
                 // route. Some appending and adjustments of the 
                 // index has to be done as Route API returns 
                 // only the order of the intermediate waypoints
+                console.log(data)
                 data = data.map(x=> x+2);
                 data.unshift(1);
                 data.push(data.length+1);

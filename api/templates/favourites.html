@@ -41,7 +41,7 @@
 </div>
 
 <script>
-	var places = `{{ fav_json | safe }}`;
+	var places = `{{ fav_json | replace('\"', '\\\"') | safe }}`;
 	places = JSON.parse(places)["data"] 
 </script>
 <script src="{{ url_for('static', filename='/javascript/favourites.js') }}"></script>
