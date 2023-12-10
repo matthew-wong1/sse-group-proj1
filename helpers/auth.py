@@ -2,6 +2,7 @@ import bcrypt
 
 from helpers.connection import connect_to_db
 
+
 # Sign-up check to see if the username is valid
 def check_username(username, errors):
     if not username:
@@ -25,7 +26,7 @@ def user_exists(username):
     return rec is not None
 
 
-# Gets the id of a user from their username 
+# Gets the id of a user from their username
 def get_user_id(username):
     conn, cursor = connect_to_db()
 
