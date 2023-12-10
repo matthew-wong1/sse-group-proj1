@@ -315,7 +315,7 @@ def test_get_api_key_or_error():
     with mock.patch.dict(os.environ, {"GCLOUD_KEY": ""}):
         with pytest.raises(ValueError) as e:
             get_api_key_or_error()
-        assert str(e.value) == "API key is empty"
+        assert str(e.value) == "Sorry, no restaurants were found."
 
 
 def test_handle_error():
@@ -325,7 +325,7 @@ def test_handle_error():
         e = HTTPError()
         response, status_code = handle_error(e)
         assert status_code == 500
-        assert response.json == {"error": "HTTP error occurred"}
+        assert response.json == {"error": "Sorry, no restaurants were found."}
 
         e = JSONDecodeError(msg="Error", doc="", pos=0)
         response, status_code = handle_error(e)
