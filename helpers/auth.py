@@ -1,4 +1,5 @@
 import bcrypt
+import psycopg2
 from flask_login import UserMixin
 
 from helpers.connection import connect_to_db
@@ -21,17 +22,25 @@ def check_username(username, errors):
 
 # Checks if a given username already exists in the table of users
 def user_exists(username):
-    conn, cursor = connect_to_db()
+    conn = None
+    cursor = None
+    result = None
+    try: 
+        conn, cursor = connect_to_db()
 
-    cursor.execute("""SELECT username
-                      FROM users
-                      WHERE username=%s""", [username])
-    rec = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
+        cursor.execute("""SELECT username
+                        FROM users
+                        WHERE username=%s""", [username])
+        rec = cursor.fetchone()
+    except (Exception, psycopg2.Error) as db_error:
+        raise db_error
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
 
     return rec is not None
+    
 
 
 # Gets the id of a user from their username

@@ -78,18 +78,29 @@ def signup():
 
     if request.method == "POST":
         errors = {}
+        exception = None
         username = request.form.get("username").strip()
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
         # Check if issues with username or password supplied
-        check_username(username, errors)
         check_password(password, repeat_password, errors)
 
-        if not errors:
-            add_user(username, password)
-            return redirect("login")
-        return render_template("signup.html", username=username, errors=errors)
+        try:
+            check_username(username, errors)
+        
+            if not errors:
+                add_user(username, password)
+                return redirect("login")
+        
+        except Exception as db_error:
+            exception = db_error
+
+        finally: 
+            return render_template("signup.html",
+                                   username=username,
+                                   errors=errors,
+                                   exception=exception)
 
     return render_template("signup.html")
 
