@@ -10,6 +10,7 @@ from helpers.places import (cinfo_empty, cinfo_search, fuzzy_match, get_cname,
 
 load_dotenv()
 api_key = os.getenv("GCLOUD_KEY", "")
+print(api_key)
 place_id = "ChIJz-VvsdMEdkgR1lQfyxijRMw"  # default place id
 
 
