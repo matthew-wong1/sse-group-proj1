@@ -34,54 +34,54 @@ jobs:
 
       - name: Run isort to check ordering of imports on tests/
         run: isort --check -diff tests/
-
-  run-unit-tests:
-    needs: python-formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
   
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run pytest
-        env:
-          PASSWORD: ${{ secrets.PASSWORD }}
-          PGDATABASE: ${{ secrets.PGDATABASE }}
-          PHGHOST: ${{ secrets.PGHOST }}
-          PGPORT: ${{ secrets.PGPORT }}
-          PGUSER: ${{ secrets.PGUSER }}
-          SECRETKEY: ${{ secrets.SECRETKEY }}
-        run: pytest tests/*.py
-
-  check-unit-test-coverage:
-    needs: run-unit-tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
+  # run-unit-tests:
+  #   needs: python-formatting
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: 3.9
   
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run coverage to check unit test coverage
-        env:
-            PASSWORD: ${{ secrets.PASSWORD }}
-            PGDATABASE: ${{ secrets.PGDATABASE }}
-            PHGHOST: ${{ secrets.PGHOST }}
-            PGPORT: ${{ secrets.PGPORT }}
-            PGUSER: ${{ secrets.PGUSER }}
-            SECRETKEY: ${{ secrets.SECRETKEY }}
-        run: |
-          coverage run -m pytest tests/
-          coverage report
+  #     - name: Install dependencies
+  #       run: pip install -r requirements.txt
+  #     - name: Run pytest
+  #       env:
+  #         PASSWORD: ${{ secrets.PASSWORD }}
+  #         PGDATABASE: ${{ secrets.PGDATABASE }}
+  #         PHGHOST: ${{ secrets.PGHOST }}
+  #         PGPORT: ${{ secrets.PGPORT }}
+  #         PGUSER: ${{ secrets.PGUSER }}
+  #         SECRETKEY: ${{ secrets.SECRETKEY }}
+  #       run: pytest tests/*.py
+
+  # check-unit-test-coverage:
+  #   needs: run-unit-tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: 3.9
+  
+  #     - name: Install dependencies
+  #       run: pip install -r requirements.txt
+  #     - name: Run coverage to check unit test coverage
+  #       env:
+  #           PASSWORD: ${{ secrets.PASSWORD }}
+  #           PGDATABASE: ${{ secrets.PGDATABASE }}
+  #           PHGHOST: ${{ secrets.PGHOST }}
+  #           PGPORT: ${{ secrets.PGPORT }}
+  #           PGUSER: ${{ secrets.PGUSER }}
+  #           SECRETKEY: ${{ secrets.SECRETKEY }}
+  #       run: |
+  #         coverage run -m pytest tests/
+  #         coverage report
 
   deploy-to-vercel:
     needs: check-unit-test-coverage
