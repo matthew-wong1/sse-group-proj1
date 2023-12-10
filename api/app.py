@@ -110,7 +110,7 @@ def settings():
 
         # if errors empty, render success text?
         return render_template("settings.html", errors=errors, success=success)
-    
+
     return render_template("settings.html")
 
 
