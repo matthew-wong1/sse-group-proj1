@@ -1,6 +1,6 @@
 import bcrypt
-
 from flask_login import UserMixin
+
 from helpers.connection import connect_to_db
 
 

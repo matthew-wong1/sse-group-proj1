@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import requests
+from flask_login import current_user
 from fuzzywuzzy import process
 
-from flask_login import current_user
 import helpers.connection as db
 
 

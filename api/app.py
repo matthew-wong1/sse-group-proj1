@@ -6,7 +6,7 @@ import requests
 from dotenv import load_dotenv
 from flask import (Flask, abort, redirect, render_template, request, session,
                    url_for)
-from flask_login import (LoginManager, UserMixin, current_user, login_required,
+from flask_login import (LoginManager, current_user, login_required,
                          login_user, logout_user)
 from oauthlib.oauth2 import WebApplicationClient
 from requests.exceptions import HTTPError, RequestException
@@ -17,7 +17,6 @@ import helpers.restaurant as hres
 from helpers.auth import (add_user, check_password, check_username,
                           get_user_id, get_username, match_password,
                           User, update_user, user_exists)
-User = User(UserMixin)
 
 # Configure app.py
 app = Flask(__name__)
@@ -76,7 +75,7 @@ def signup():
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
-        # Check if fields empty
+        # Check if issues with username or password supplied
         check_username(username, errors)
         check_password(password, repeat_password, errors)
 
@@ -84,6 +83,7 @@ def signup():
             add_user(username, password)
             return redirect("login")
         return render_template("signup.html", username=username, errors=errors)
+
     return render_template("signup.html")
 
 
@@ -97,16 +97,18 @@ def settings():
         password = request.form.get("password")
         repeat_password = request.form.get("repeat_password")
 
+        # Check old password matches
         if (not match_password(current_user.username, password_old)):
             errors['password_old'] = "Incorrect password"
 
+        # Check validity of new password
         check_password(password, repeat_password, errors)
 
         if not errors:
             update_user(current_user.id, password)
             success = True
 
-        # if errors empty, render success text?
+        # Render messages
         return render_template("settings.html", errors=errors, success=success)
 
     return render_template("settings.html")
@@ -170,7 +172,6 @@ def callback():
 
     # Create a user object
     user = User(id=get_user_id(email), username=email)
-    login_user(user)
 
     # Log in the user
     login_user(user)
@@ -183,8 +184,8 @@ def login():
     if current_user.is_authenticated:
         return redirect("/")
 
-    errors = {}
     if request.method == "POST":
+        errors = {}
         username = request.form.get("username").strip()
         password = request.form.get("password")
 
@@ -193,15 +194,14 @@ def login():
             errors['login'] = 'Incorrect username or password'
             return render_template("login.html",
                                    username=username,
-                                   errors=errors,
-                                   GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
+                                   errors=errors)
 
         user = User(id=get_user_id(username), username=username)
         login_user(user)
         return redirect("/")
 
     else:
-        return render_template("login.html", GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
+        return render_template("login.html")
 
 
 @app.route("/logout")
