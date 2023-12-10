@@ -79,11 +79,10 @@ function createList(multiplePlacesArrays) {
 					overflow-hidden my-2 justify-between">
 					<div class='flex items-center'>
 					<!-- Adjustments to image container for equal spacing -->
-					<div class="flex justify-center items-center w-[35%] 
-            h-[10rem]">     
-						<img class="rounded-l-lg object-center" 
+					<div class="w-48 flex items-center justify-center p-4" style="height: 150px; min-width: 200px; overflow: hidden;">     
+						<img class="object-cover rounded-lg w-full h-full" 
 							src="${place.photo_reference}" 
-							alt="Photo of ${place.name}">
+							alt="Photo of ${place.name}" style="max-height: 200px;">
 					</div>
 					<div class="p-4 flex flex-col justify-between w-[65%]">
 						<div>
@@ -219,7 +218,6 @@ function optimize(tripid) {
                 // route. Some appending and adjustments of the 
                 // index has to be done as Route API returns 
                 // only the order of the intermediate waypoints
-                console.log(data)
                 data = data.map(x=> x+2);
                 data.unshift(1);
                 data.push(data.length+1);
