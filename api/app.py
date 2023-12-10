@@ -104,11 +104,13 @@ def settings():
 
         check_password(password, repeat_password, errors)
 
-        if success:
+        if not errors:
             update_user(current_user.id, password)
+            success = True
 
         # if errors empty, render success text?
-        return render_template("settings.html", errors=errors)
+        return render_template("settings.html", errors=errors, success=success)
+    
     return render_template("settings.html")
 
 
