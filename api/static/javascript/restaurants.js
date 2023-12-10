@@ -227,7 +227,10 @@ function toggleRestaurant(place_id) {
                 heartIcon.classList.add('fas');
             }
         } else {
-            alert('Operation failed.');
+            popup.className = red
+            document.getElementById('alert-text').innerHTML = 
+                "There was an error updating your favourites. Please try again"
+            showPopup()
         }
     })
     .catch((error) => {
@@ -240,7 +243,7 @@ function toggleRestaurant(place_id) {
         } else {
             popup.className = red
             document.getElementById('alert-text').innerHTML = 
-                "There was an error saving the location. Please try again later"
+                "There was an error updating your favourites. Please try again later"
             showPopup()
         }                      
     });

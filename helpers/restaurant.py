@@ -3,7 +3,7 @@ from json.decoder import JSONDecodeError
 
 import folium
 import requests
-from flask import jsonify, request
+from flask import render_template, request
 from flask_login import current_user
 from requests.exceptions import HTTPError, RequestException
 from requests.utils import quote
@@ -241,14 +241,14 @@ def fetch_additional_details(
             if place_details_data.get("status") == "OK":
                 result = place_details_data.get("result", {})
                 details["formatted_phone_number"] = result.get(
-                    "formatted_phone_number", "Phone number not found"
+                    "formatted_phone_number", " "
                 )
                 details["website"] = result.get(
                     "website", details["search_link"]
                 )
                 details["editorial_summary"] = result.get(
                     "editorial_summary", {}
-                ).get("overview", "Editorial summary not found")
+                ).get("overview", " ")
 
                 photo_reference = details["photo_reference"]
                 details["photo_url"] = (
@@ -314,7 +314,8 @@ def is_restaurant_saved(restaurants):
 def get_api_key_or_error():
     api_key = os.environ.get("GCLOUD_KEY")
     if not api_key:
-        raise ValueError("Sorry, no restaurants were found.")
+        return render_template("restaurant-not-found.html"), 404
+        # raise ValueError("Sorry, no restaurants were found.")
     return api_key
 
 
@@ -351,7 +352,8 @@ def get_search_details(data):
 def get_lat_lng_or_error(api_key, place_id):
     lat, lng = fetch_place_details(api_key, place_id)
     if not lat or not lng:
-        raise ValueError("Sorry, no restaurants were found.")
+        return render_template("restaurant-not-found.html"), 404
+        # raise ValueError("Sorry, no restaurants were found.")
     return lat, lng
 
 
@@ -366,7 +368,8 @@ def get_nearby_data_or_error(api_key, lat, lng, search_details):
         search_details["open"],
     )
     if "status" not in nearby_data or nearby_data["status"] != "OK":
-        raise ValueError("Sorry, no restaurants were found.")
+        return render_template("restaurant-not-found.html"), 404
+        # raise ValueError("Sorry, no restaurants were found.")
     return nearby_data
 
 
@@ -406,13 +409,17 @@ def generate_map_html(restaurant_data, lat, lng, dist):
 
 def handle_error(e):
     if isinstance(e, HTTPError):
-        return jsonify({"error": "Sorry, no restaurants were found."}), 500
+        return render_template("restaurant-not-found.html"), 500
+        # return jsonify({"error": "Sorry, no restaurants were found."}), 500
     elif isinstance(e, JSONDecodeError):
-        return jsonify({"error": "No Restaurants found"}), 500
+        return render_template("restaurant-not-found.html"), 500
+        # return jsonify({"error": "No Restaurants found"}), 500
     elif isinstance(e, RequestException):
-        return jsonify({"error": "Please check your connection"}), 500
+        return render_template("restaurant-not-found.html"), 500
+        # return jsonify({"error": "Please check your connection"}), 500
     else:
-        return jsonify({"error": str(e)}), 500
+        return render_template("restaurant-not-found.html"), 500
+        # return jsonify({"error": str(e)}), 500
 
 
 def handle_places_table(cursor, data):
