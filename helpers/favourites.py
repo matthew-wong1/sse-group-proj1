@@ -1,20 +1,16 @@
+import configparser
 import json
+import os
 
 import requests
 
 import helpers.connection as db
 
-import configparser
-
-import os
-
-
 config = configparser.ConfigParser()
 file_path = '../ini/favourites.ini'
 absolute_path = os.path.abspath(os.path.join(os.getcwd(), file_path))
-
-print(absolute_path)
 config.read(absolute_path)
+
 
 # function to return the locations user had saved as favourites
 # from the database along with the place details
