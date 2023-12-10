@@ -120,7 +120,7 @@ def get_cinfo(cname):
     # attempt the API call for the country information
     # and return empty list if it doesn't find a match
     try:
-        response_cninfo = requests.get(country_url, timeout=10)
+        response_cninfo = requests.get(country_url, timeout=5)
         if response_cninfo.status_code == 200:
             data_country = response_cninfo.json()
         else:
@@ -202,7 +202,7 @@ def get_weather(location, date):
     try:
         response_weather = requests.get(weather_url,
                                         params=weather_params,
-                                        timeout=10)
+                                        timeout=5)
         data_weather = response_weather.json()["daily"]
         return {
             "weather": interpret_weather(data_weather["weather_code"][0]),
