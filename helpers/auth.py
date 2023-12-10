@@ -1,13 +1,13 @@
 import bcrypt
 import psycopg2
 import requests
-import json
 from flask_login import UserMixin
 
 from helpers.connection import connect_to_db
 
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration")
+
 
 # User class
 class User(UserMixin):
@@ -38,7 +38,7 @@ def user_exists(username):
     conn = None
     cursor = None
     result = None
-    try: 
+    try:
         conn, cursor = connect_to_db()
 
         cursor.execute("""SELECT username
@@ -54,7 +54,6 @@ def user_exists(username):
             conn.close()
 
     return result is not None
-    
 
 
 # Gets the id of a user from their username
@@ -98,7 +97,7 @@ def get_username(user_id):
 
     except (Exception, psycopg2.Error) as db_error:
         raise db_error
-    
+
     finally:
         if conn:
             cursor.close()
@@ -135,7 +134,7 @@ def match_password(username, password):
 
     except (Exception, psycopg2.Error) as db_error:
         raise db_error
-    
+
     finally:
         if conn:
             cursor.close()
@@ -188,18 +187,17 @@ def update_user(user_id, password):
 
     try:
         conn, cursor = connect_to_db()
-        
-
         cursor.execute("""UPDATE users
             SET password=%s
             WHERE id=%s""", params)
-        
 
     except (Exception, psycopg2.Error) as db_error:
         raise db_error
+
     else:
         if (cursor.rowcount == 1):
             conn.commit()
+
     finally:
         if conn:
             cursor.close()
