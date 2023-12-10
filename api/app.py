@@ -1,6 +1,7 @@
 import json
 import os
 import secrets
+from datetime import timedelta
 
 import requests
 from dotenv import load_dotenv
@@ -21,7 +22,10 @@ from helpers.auth import (User, add_user, check_password, check_username,
 # Configure app.py
 app = Flask(__name__)
 
+# Load environment variables
 load_dotenv()
+
+# Get app's secret key so Flask_login can manipulate the session
 app.config['SECRET_KEY'] = os.environ.get("SECRETKEY")
 
 # Configure Flask login
@@ -29,8 +33,13 @@ login_manager = LoginManager(app)
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+# Set cookie expiration
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=31)
+
+# Allow cookies to refresh on request
+app.config['REMEMBER_COOKIE_REFRESH_EACH_REQUEST'] = True
+
 # Configure Google OAuth
-# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' - FOR LOCAL TESTING
 # to work on MacOS, turn off AirPlay receiver and do $ flask run --host=0.0.0.0
 # will only work on localhost
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
@@ -43,6 +52,7 @@ GOOGLE_DISCOVERY_URL = (
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 
+# Define user_loader callback to load user obj from user id in session
 @login_manager.user_loader
 def load_user(user_id):
     return User(id=user_id, username=get_username(user_id))
