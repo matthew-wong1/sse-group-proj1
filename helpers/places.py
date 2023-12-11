@@ -86,13 +86,13 @@ def get_cname(search_item, api_key):
             locality = [entry['long_name']
                         for entry in cname_data
                         if 'locality' in entry.get('types', '')][0]
-        except: 
+        except BaseException:
             locality = ''
         try:
             cname = [entry['long_name']
-                    for entry in cname_data if 'country'
-                    in entry.get('types', '')][0]
-        except: 
+                     for entry in cname_data if 'country'
+                     in entry.get('types', '')][0]
+        except BaseException:
             cname = ''
         return {"country_name": cname, "city": locality}
     except BaseException:
