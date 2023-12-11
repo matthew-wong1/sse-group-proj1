@@ -82,12 +82,18 @@ def get_cname(search_item, api_key):
     try:
         response_cname = requests.get(geocode_url, params=params)
         cname_data = response_cname.json()["results"][0]["address_components"]
-        locality = [entry['long_name']
-                    for entry in cname_data
-                    if 'locality' in entry.get('types', '')][0]
-        cname = [entry['long_name']
-                 for entry in cname_data if 'country'
-                 in entry.get('types', '')][0]
+        try:
+            locality = [entry['long_name']
+                        for entry in cname_data
+                        if 'locality' in entry.get('types', '')][0]
+        except: 
+            locality = ''
+        try:
+            cname = [entry['long_name']
+                    for entry in cname_data if 'country'
+                    in entry.get('types', '')][0]
+        except: 
+            cname = ''
         return {"country_name": cname, "city": locality}
     except BaseException:
         return {"country_name": '', "city": ''}
