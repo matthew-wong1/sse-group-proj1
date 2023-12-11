@@ -6,6 +6,8 @@
 
 {% block body %}
 
+{% include "useralerts.html" %}
+
 <div class="p-form">
     <form action="/signup" method="post" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-sm mx-auto">
         <!-- Username field-->
@@ -25,7 +27,7 @@
             <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
             Password
             </label>
-            <input class="shadow appearance-none border border-black rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" name="password" type="password" required pattern="^.{8,}">
+            <input class="shadow appearance-none border border-black rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" name="password" type="password" required pattern="^.{8,}" title="Must be at least 8 characters long">
             <!-- Error messages -->
             {% if 'password' in errors %}
                 <p class="text-red-500 text-xs italic">{{ errors['password'] }}</p> 
@@ -59,5 +61,7 @@
         {% include "oauth_buttons.html" %}
     </form>
 </div>
+
+<script src="{{ url_for('static', filename='/javascript/index.js') }}"></script>
 
 {% endblock %}
