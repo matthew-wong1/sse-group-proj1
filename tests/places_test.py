@@ -3,10 +3,9 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-# get_cinfo
-from helpers.places import (cinfo_empty, cinfo_search, fuzzy_match, get_cname,
-                            get_place_details, get_places, get_weather,
-                            interpret_weather, is_location_saved)
+from helpers.places import (cinfo_empty, cinfo_search, fuzzy_match, get_cinfo,
+                            get_cname, get_place_details, get_places,
+                            get_weather, interpret_weather, is_location_saved)
 
 load_dotenv()
 api_key = os.getenv("GCLOUD_KEY", "")
@@ -49,8 +48,8 @@ def test_cinfo_empty():
                              "languages": {"": ""}}
 
 
-# def test_get_cinfo():
-#     assert get_cinfo('United Kingdom') == dummy_search_result
+def test_get_cinfo():
+    assert get_cinfo('United Kingdom') == dummy_search_result
 
 
 @pytest.mark.parametrize("test_input,expected",
