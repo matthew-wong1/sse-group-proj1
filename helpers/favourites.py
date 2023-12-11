@@ -89,13 +89,13 @@ def get_favourites(user):
         if trip_data["sortorder"] is not None:
             if (len(trip_data["sortorder"]) ==
                     len(trip_data["place_list"])):
-                try: 
+                try:
                     trip_data['place_list'] = sorted(
                         trip_data['place_list'],
                         key=lambda x: trip_data["sortorder"].index(
                             x['index']))
                 except BaseException:
-                     trip_data['place_list'] = trip_data['place_list']
+                    trip_data['place_list'] = trip_data['place_list']
     return list(transformed_data.values())
 
 
